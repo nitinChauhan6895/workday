@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-canvas text-ink antialiased;
+  -webkit-tap-highlight-color: transparent;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Hairline 0.5px borders for the calm, card-based look. */
+.hairline {
+  border-width: 0.5px;
+  @apply border-line;
+}
+
+/* Cards */
+.card {
+  @apply rounded-2xl bg-card shadow-card;
+  border-width: 0.5px;
+  border-color: #e7e8ec;
+}
+
+/* Completed items: strikethrough + muted */
+.item-done {
+  @apply text-muted line-through;
+}
+
+/* Hide number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Thin, unobtrusive scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d6d8dd transparent;
+}
