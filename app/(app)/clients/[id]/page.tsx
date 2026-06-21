@@ -1,23 +1,22 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  clients,
-  clientProgress,
-  itemsForClient,
-  meetings,
-} from "@/lib/mock";
+import { getClient, getItems, getMeetings } from "@/lib/data";
+import { clientProgress } from "@/lib/derive";
 import { STAGE_META } from "@/lib/types";
 import ItemRow from "@/components/ItemRow";
 
-export default function ClientDetailPage({ params }: { params: { id: string } }) {
-  const client = clients.find((c) => c.id === params.id);
+export const dynamic = "force-dynamic";
+
+export default async function ClientDetailPage({ params }: { params: { id: string } }) {
+  const client = await getClient(params.id);
   if (!client) notFound();
 
-  const pct = clientProgress(client);
-  const own = itemsForClient(client.id);
+  const [allItems, allMeetings] = await Promise.all([getItems(), getMeetings()]);
+  const own = allItems.filter((i) => i.client_id === client.id);
+  const pct = clientProgress(client, allItems);
   const open = own.filter((i) => i.status !== "done");
   const done = own.filter((i) => i.status === "done");
-  const clientMeetings = meetings
+  const clientMeetings = allMeetings
     .filter((m) => m.client_id === client.id)
     .sort((a, b) => b.datetime.localeCompare(a.datetime));
 
@@ -31,7 +30,7 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-ink">{client.name}</h1>
-            <p className="mt-0.5 text-[12px] text-muted">{client.products.join(" · ")}</p>
+            <p className="mt-0.5 text-[12px] text-muted">{client.products.join(" · ") || "—"}</p>
           </div>
           <span className="rounded-full bg-canvas px-2.5 py-1 text-[12px] font-medium text-subtle hairline">
             {STAGE_META[client.stage].label}
@@ -43,9 +42,7 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
             <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
           </div>
           <span className="text-[13px] font-medium tabular-nums text-ink">{pct}%</span>
-          <span className="text-[11px] text-muted">
-            ({client.progress_mode})
-          </span>
+          <span className="text-[11px] text-muted">({client.progress_mode})</span>
         </div>
 
         <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 text-[13px] sm:grid-cols-3">
@@ -71,7 +68,7 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
       <Section title={`Open items (${open.length})`}>
         {open.length ? (
           <div className="card divide-y divide-line/70 overflow-hidden">
-            {open.map((i) => <ItemRow key={i.id} item={i} />)}
+            {open.map((i) => <ItemRow key={i.id} item={i} client={client} />)}
           </div>
         ) : (
           <Empty>No open items.</Empty>
@@ -81,7 +78,7 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
       {done.length > 0 && (
         <Section title={`Done (${done.length})`}>
           <div className="card divide-y divide-line/70 overflow-hidden">
-            {done.map((i) => <ItemRow key={i.id} item={i} />)}
+            {done.map((i) => <ItemRow key={i.id} item={i} client={client} />)}
           </div>
         </Section>
       )}

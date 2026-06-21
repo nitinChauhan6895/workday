@@ -1,15 +1,22 @@
-import { items } from "@/lib/mock";
+import { getItems, getClients, clientsById } from "@/lib/data";
+import type { Item } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import ItemRow from "@/components/ItemRow";
+import RealtimeRefresh from "@/components/RealtimeRefresh";
 
-export default function StandupPage() {
+export const dynamic = "force-dynamic";
+
+export default async function StandupPage() {
+  const [items, clients] = await Promise.all([getItems(), getClients()]);
+  const clientMap = clientsById(clients);
+
   // Everything blocked on dev OR flagged for standup.
   const relevant = items.filter(
     (i) => i.status === "blocked_on_dev" || i.flag_for_standup,
   );
 
   // Group by assigned dev (unassigned last).
-  const groups = new Map<string, typeof items>();
+  const groups = new Map<string, Item[]>();
   for (const i of relevant) {
     const key = i.assigned_dev ?? "Unassigned";
     if (!groups.has(key)) groups.set(key, []);
@@ -23,6 +30,7 @@ export default function StandupPage() {
 
   return (
     <div>
+      <RealtimeRefresh />
       <PageHeader
         title="Standup"
         subtitle={`${relevant.length} items · blocked on dev or flagged`}
@@ -45,7 +53,7 @@ export default function StandupPage() {
               </div>
               <div className="card divide-y divide-line/70 overflow-hidden">
                 {list.map((i) => (
-                  <ItemRow key={i.id} item={i} />
+                  <ItemRow key={i.id} item={i} client={clientMap.get(i.client_id ?? "")} />
                 ))}
               </div>
             </section>

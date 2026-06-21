@@ -1,24 +1,33 @@
 import Link from "next/link";
-import type { Item } from "@/lib/types";
-import { clientById, isOverdue, TODAY } from "@/lib/mock";
+import type { Item, Client } from "@/lib/types";
+import { isOverdue, todayISO } from "@/lib/derive";
 import { TypeBadge, PriorityBadge } from "./Badge";
 
-function formatDue(due: string | null): { label: string; overdue: boolean } | null {
+function formatDue(
+  due: string | null,
+  today: string,
+): { label: string; overdue: boolean } | null {
   if (!due) return null;
-  const overdue = due < TODAY;
-  const today = due === TODAY;
+  const overdue = due < today;
+  const isToday = due === today;
   const d = new Date(due + "T00:00:00");
-  const label = today
+  const label = isToday
     ? "Today"
     : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   return { label, overdue };
 }
 
-export default function ItemRow({ item }: { item: Item }) {
-  const client = clientById(item.client_id);
+export default function ItemRow({
+  item,
+  client,
+}: {
+  item: Item;
+  client?: Client | null;
+}) {
+  const today = todayISO();
   const done = item.status === "done";
-  const due = formatDue(item.due_date);
-  const overdue = isOverdue(item);
+  const due = formatDue(item.due_date, today);
+  const overdue = isOverdue(item, today);
 
   return (
     <div className="flex items-center gap-3 px-4 py-2.5">

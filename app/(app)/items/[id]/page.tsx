@@ -1,14 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { items, clientById, meetingById } from "@/lib/mock";
+import { getItem, getClient, getMeeting } from "@/lib/data";
 import { TypeBadge, PriorityBadge, StatusBadge } from "@/components/Badge";
 
-export default function ItemDetailPage({ params }: { params: { id: string } }) {
-  const item = items.find((i) => i.id === params.id);
+export const dynamic = "force-dynamic";
+
+export default async function ItemDetailPage({ params }: { params: { id: string } }) {
+  const item = await getItem(params.id);
   if (!item) notFound();
 
-  const client = clientById(item.client_id);
-  const meeting = meetingById(item.meeting_id);
+  const [client, meeting] = await Promise.all([
+    item.client_id ? getClient(item.client_id) : Promise.resolve(null),
+    item.meeting_id ? getMeeting(item.meeting_id) : Promise.resolve(null),
+  ]);
 
   return (
     <div className="mx-auto max-w-2xl">

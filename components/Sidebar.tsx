@@ -12,7 +12,7 @@ const NAV = [
   { href: "/settings", label: "Settings", icon: GearIcon },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
@@ -28,6 +28,7 @@ export default function Sidebar() {
 
       <Link
         href="/items/new"
+        onClick={onNavigate}
         className="mb-4 flex items-center justify-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-[13px] font-medium text-white shadow-sm transition hover:bg-accent-dark"
       >
         <PlusIcon />
@@ -42,6 +43,7 @@ export default function Sidebar() {
             <Link
               key={href}
               href={href}
+              onClick={onNavigate}
               className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition ${
                 active
                   ? "bg-accent-soft text-accent"

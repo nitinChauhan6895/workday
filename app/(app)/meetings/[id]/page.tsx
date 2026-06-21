@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { meetings, clientById, items } from "@/lib/mock";
+import { getMeeting, getClient, getItems } from "@/lib/data";
 import { TypeBadge, StatusBadge } from "@/components/Badge";
 
-export default function MeetingCapturePage({ params }: { params: { id: string } }) {
-  const meeting = meetings.find((m) => m.id === params.id);
+export const dynamic = "force-dynamic";
+
+export default async function MeetingCapturePage({ params }: { params: { id: string } }) {
+  const meeting = await getMeeting(params.id);
   if (!meeting) notFound();
 
-  const client = clientById(meeting.client_id);
-  const actionItems = items.filter((i) => i.meeting_id === meeting.id);
+  const [client, allItems] = await Promise.all([
+    meeting.client_id ? getClient(meeting.client_id) : Promise.resolve(null),
+    getItems(),
+  ]);
+  const actionItems = allItems.filter((i) => i.meeting_id === meeting.id);
   const d = new Date(meeting.datetime);
 
   return (
