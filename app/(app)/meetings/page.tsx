@@ -3,14 +3,26 @@ import { getMeetings, getClients, clientsById } from "@/lib/data";
 import { todayISO } from "@/lib/derive";
 import type { Meeting, Client } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
+import MeetingsClientFilter from "@/components/MeetingsClientFilter";
 import RealtimeRefresh from "@/components/RealtimeRefresh";
 
 export const dynamic = "force-dynamic";
 
-export default async function MeetingsPage() {
-  const [meetings, clients] = await Promise.all([getMeetings(), getClients()]);
+export default async function MeetingsPage({
+  searchParams,
+}: {
+  searchParams: { client?: string };
+}) {
+  const [allMeetings, clients] = await Promise.all([getMeetings(), getClients()]);
   const clientMap = clientsById(clients);
   const today = todayISO();
+
+  const filter = searchParams.client;
+  const meetings = allMeetings.filter((m) => {
+    if (filter === "internal") return m.client_id === null;
+    if (filter) return m.client_id === filter;
+    return true;
+  });
 
   const upcoming = meetings
     .filter((m) => m.datetime.slice(0, 10) >= today)
@@ -22,7 +34,23 @@ export default async function MeetingsPage() {
   return (
     <div>
       <RealtimeRefresh />
-      <PageHeader title="Meetings" subtitle={`${meetings.length} total`} />
+      <PageHeader
+        title="Meetings"
+        subtitle={
+          filter ? `${meetings.length} of ${allMeetings.length}` : `${allMeetings.length} total`
+        }
+        action={
+          <Link
+            href="/meetings/new"
+            className="rounded-lg bg-accent px-3 py-2 text-[13px] font-medium text-white transition hover:bg-accent-dark"
+          >
+            New meeting
+          </Link>
+        }
+      />
+      <div className="mb-4">
+        <MeetingsClientFilter clients={clients} />
+      </div>
       <Group title="Upcoming" list={upcoming} clientMap={clientMap} />
       <Group title="Recent" list={recent} clientMap={clientMap} />
     </div>
