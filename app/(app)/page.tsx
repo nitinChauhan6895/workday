@@ -38,20 +38,54 @@ export default async function DashboardPage() {
     .sort((a, b) => a.datetime.localeCompare(b.datetime));
 
   const stats = dashboardStats(items, meetings, today);
+  const firstRun =
+    items.length === 0 && clients.length === 0 && meetings.length === 0;
 
   return (
     <div>
       <RealtimeRefresh />
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold tracking-tight text-ink">{greeting}</h1>
-        <p className="mt-0.5 text-[13px] text-subtle">
-          {now.toLocaleDateString("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-          })}
-        </p>
+      <div className="mb-6 flex items-end justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-ink">{greeting}</h1>
+          <p className="mt-0.5 text-[13px] text-subtle">
+            {now.toLocaleDateString("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+        </div>
+        <Link
+          href="/items/new"
+          className="shrink-0 rounded-lg bg-accent px-3 py-2 text-[13px] font-medium text-white transition hover:bg-accent-dark"
+        >
+          New item
+        </Link>
       </div>
+
+      {firstRun && (
+        <div className="mb-6 card p-6">
+          <h2 className="text-[15px] font-semibold text-ink">Welcome to WorkDay 👋</h2>
+          <p className="mt-1 text-[13px] text-subtle">
+            Nothing here yet. Start by adding a client, then capture the items
+            and meetings that hang off it.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link
+              href="/clients/new"
+              className="rounded-lg bg-accent px-3 py-2 text-[13px] font-medium text-white transition hover:bg-accent-dark"
+            >
+              Add a client
+            </Link>
+            <Link
+              href="/items/new"
+              className="rounded-lg border border-line bg-card px-3 py-2 text-[13px] font-medium text-ink transition hover:bg-canvas"
+            >
+              Create an item
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Open items" value={stats.open} href="/items" />
