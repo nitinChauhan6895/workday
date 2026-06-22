@@ -6,6 +6,31 @@ import { fetchIcs, parseIcsToMeetings } from "@/lib/calendar";
 
 export type SyncResult = { ok: boolean; message: string };
 
+// Save profile fields into Supabase auth user-metadata.
+export async function updateProfile(form: FormData): Promise<void> {
+  const supabase = createClient();
+  const first_name = (form.get("first_name") ?? "").toString().trim();
+  const last_name = (form.get("last_name") ?? "").toString().trim();
+  const organisation = (form.get("organisation") ?? "").toString().trim();
+
+  const { error } = await supabase.auth.updateUser({
+    data: { first_name, last_name, organisation },
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
+}
+
+export async function changePassword(form: FormData): Promise<SyncResult> {
+  const password = (form.get("password") ?? "").toString();
+  if (password.length < 6) {
+    return { ok: false, message: "Password must be at least 6 characters." };
+  }
+  const supabase = createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, message: "Password updated." };
+}
+
 // Save (or clear) the published ICS URL for the current user.
 export async function saveIcsUrl(form: FormData): Promise<void> {
   const supabase = createClient();

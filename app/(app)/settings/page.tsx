@@ -4,6 +4,8 @@ import { APP_VERSION } from "@/lib/version";
 import PageHeader from "@/components/PageHeader";
 import SignOutButton from "@/components/SignOutButton";
 import CalendarSync from "@/components/CalendarSync";
+import ProfileForm from "@/components/ProfileForm";
+import ChangePasswordForm from "@/components/ChangePasswordForm";
 
 export const dynamic = "force-dynamic";
 
@@ -13,21 +15,37 @@ export default async function SettingsPage() {
     getSettings(),
   ]);
 
+  const meta = (user?.user_metadata ?? {}) as Record<string, string>;
+  const profile = {
+    first_name: meta.first_name ?? "",
+    last_name: meta.last_name ?? "",
+    organisation: meta.organisation ?? "",
+  };
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <PageHeader title="Settings" />
 
-      <div className="card divide-y divide-line/70 overflow-hidden">
-        <Row label="Account" value={user?.email ?? "—"} action={<SignOutButton />} />
-        <Row label="Sync" value="Supabase realtime — live" />
-        <Row label="Theme" value="Light" />
-        <Row label="Version" value={APP_VERSION} />
-      </div>
+      <Section title="Profile">
+        <ProfileForm initial={profile} email={user?.email ?? ""} />
+      </Section>
+
+      <Section title="Password">
+        <ChangePasswordForm />
+      </Section>
+
+      <Section title="Account">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[13px] text-ink">{user?.email ?? "—"}</div>
+            <div className="text-[12px] text-muted">Realtime sync · WorkDay v{APP_VERSION}</div>
+          </div>
+          <SignOutButton />
+        </div>
+      </Section>
 
       <section>
-        <h2 className="mb-2 px-1 text-[13px] font-semibold text-ink">
-          Outlook / Teams calendar
-        </h2>
+        <h2 className="mb-2 px-1 text-[13px] font-semibold text-ink">Outlook / Teams calendar</h2>
         <div className="card p-5">
           <CalendarSync
             icsUrl={settings?.ics_url ?? null}
@@ -36,31 +54,18 @@ export default async function SettingsPage() {
         </div>
         <p className="mt-2 px-1 text-[11px] text-muted">
           In Outlook → Settings → Calendar → Shared calendars → Publish a calendar
-          (permission “Can view all details”), copy the .ics link and paste it
-          above. Outlook refreshes the feed on its own schedule, so new meetings
-          can take a while to appear.
+          (“Can view all details”), copy the .ics link and paste it above.
         </p>
       </section>
     </div>
   );
 }
 
-function Row({
-  label,
-  value,
-  action,
-}: {
-  label: string;
-  value: string;
-  action?: React.ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 px-4 py-3">
-      <div className="min-w-0">
-        <div className="text-[13px] font-medium text-ink">{label}</div>
-        <div className="truncate text-[12px] text-muted">{value}</div>
-      </div>
-      {action}
-    </div>
+    <section>
+      <h2 className="mb-2 px-1 text-[13px] font-semibold text-ink">{title}</h2>
+      <div className="card p-5">{children}</div>
+    </section>
   );
 }

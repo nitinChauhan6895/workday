@@ -53,23 +53,64 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
           <span className="text-[11px] text-muted">({client.progress_mode})</span>
         </div>
 
+        {client.languages.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-1.5">
+            {client.languages.map((l) => (
+              <span key={l} className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
+                {l}
+              </span>
+            ))}
+          </div>
+        )}
+
         <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 text-[13px] sm:grid-cols-3">
-          <Field label="Primary contact">{client.primary_contact ?? "—"}</Field>
-          <Field label="Email">{client.contact_email ?? "—"}</Field>
           <Field label="Kickoff">{client.kickoff_date ?? "—"}</Field>
           <Field label="Target go-live">{client.target_golive ?? "—"}</Field>
-          <Field label="Link">
-            {client.link ? (
-              <a href={client.link} target="_blank" rel="noreferrer" className="text-accent hover:underline">
-                Open
-              </a>
-            ) : (
-              "—"
-            )}
-          </Field>
         </dl>
+
+        {client.links.length > 0 && (
+          <div className="mt-4">
+            <div className="mb-1 text-[11px] uppercase tracking-wide text-muted">Links</div>
+            <ul className="flex flex-wrap gap-2">
+              {client.links.map((l, i) => (
+                <li key={i}>
+                  <a
+                    href={l.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-lg border border-line bg-card px-2.5 py-1 text-[12px] text-accent hover:bg-canvas"
+                  >
+                    {l.title || l.url}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {client.notes && (
           <p className="mt-4 rounded-lg bg-canvas px-3 py-2 text-[12px] text-subtle">{client.notes}</p>
+        )}
+
+        {client.checklist.length > 0 && (
+          <ul className="mt-4 space-y-1">
+            {client.checklist.map((c, i) => (
+              <li key={i} className="flex items-center gap-2 text-[13px]">
+                <span
+                  className={`flex h-4 w-4 items-center justify-center rounded border ${
+                    c.done ? "border-accent bg-accent text-white" : "border-line"
+                  }`}
+                >
+                  {c.done && (
+                    <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12l5 5 9-11" />
+                    </svg>
+                  )}
+                </span>
+                <span className={c.done ? "text-muted line-through" : "text-ink"}>{c.text}</span>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 

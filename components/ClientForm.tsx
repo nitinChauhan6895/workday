@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { Client, Product, ClientStage } from "@/lib/types";
 import { STAGE_META } from "@/lib/types";
+import LanguagesEditor from "./LanguagesEditor";
+import LinksEditor from "./LinksEditor";
+import ChecklistEditor from "./ChecklistEditor";
 
-const PRODUCTS: Product[] = ["ASR", "STT", "TTS"];
-const STAGES: ClientStage[] = ["onboarding", "in_progress", "in_qa", "live", "on_hold"];
+const PRODUCTS: Product[] = ["Voicebot", "RTS", "AQM", "ImporterFlow"];
+const STAGES: ClientStage[] = ["onboarding", "in_progress", "in_uat", "live", "hold"];
 
 const inputCls =
   "w-full rounded-lg border border-line bg-card px-3 py-2 text-[13px] text-ink outline-none placeholder:text-muted focus:border-accent";
@@ -39,12 +42,17 @@ export default function ClientForm({
       </div>
 
       <div>
+        <span className={labelCls}>Languages (STT / TTS delivery)</span>
+        <LanguagesEditor initial={initial?.languages ?? []} />
+      </div>
+
+      <div>
         <span className={labelCls}>Products</span>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {PRODUCTS.map((p) => (
             <label
               key={p}
-              className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-line bg-card px-3 py-2 text-[13px] text-ink has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent"
+              className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-line bg-card px-3 py-2 text-[13px] text-ink has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent"
             >
               <input
                 type="checkbox"
@@ -62,18 +70,12 @@ export default function ClientForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className={labelCls} htmlFor="stage">Stage</label>
-          <select
-            id="stage"
-            name="stage"
-            defaultValue={initial?.stage ?? "onboarding"}
-            className={inputCls}
-          >
+          <select id="stage" name="stage" defaultValue={initial?.stage ?? "onboarding"} className={inputCls}>
             {STAGES.map((s) => (
               <option key={s} value={s}>{STAGE_META[s].label}</option>
             ))}
           </select>
         </div>
-
         <div>
           <label className={labelCls} htmlFor="progress_mode">Progress</label>
           <select
@@ -106,56 +108,18 @@ export default function ClientForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={labelCls} htmlFor="primary_contact">Primary contact</label>
-          <input
-            id="primary_contact"
-            name="primary_contact"
-            defaultValue={initial?.primary_contact ?? ""}
-            className={inputCls}
-          />
-        </div>
-        <div>
-          <label className={labelCls} htmlFor="contact_email">Contact email</label>
-          <input
-            id="contact_email"
-            name="contact_email"
-            type="email"
-            defaultValue={initial?.contact_email ?? ""}
-            className={inputCls}
-          />
-        </div>
-        <div>
           <label className={labelCls} htmlFor="kickoff_date">Kickoff date</label>
-          <input
-            id="kickoff_date"
-            name="kickoff_date"
-            type="date"
-            defaultValue={initial?.kickoff_date ?? ""}
-            className={inputCls}
-          />
+          <input id="kickoff_date" name="kickoff_date" type="date" defaultValue={initial?.kickoff_date ?? ""} className={inputCls} />
         </div>
         <div>
           <label className={labelCls} htmlFor="target_golive">Target go-live</label>
-          <input
-            id="target_golive"
-            name="target_golive"
-            type="date"
-            defaultValue={initial?.target_golive ?? ""}
-            className={inputCls}
-          />
+          <input id="target_golive" name="target_golive" type="date" defaultValue={initial?.target_golive ?? ""} className={inputCls} />
         </div>
       </div>
 
       <div>
-        <label className={labelCls} htmlFor="link">Link</label>
-        <input
-          id="link"
-          name="link"
-          type="url"
-          defaultValue={initial?.link ?? ""}
-          placeholder="https://…"
-          className={inputCls}
-        />
+        <span className={labelCls}>Links (Teams channels, files, mail…)</span>
+        <LinksEditor initial={initial?.links ?? []} />
       </div>
 
       <div>
@@ -167,6 +131,9 @@ export default function ClientForm({
           defaultValue={initial?.notes ?? ""}
           className={`${inputCls} resize-y`}
         />
+        <div className="mt-2">
+          <ChecklistEditor initial={initial?.checklist ?? []} />
+        </div>
       </div>
 
       <div className="flex justify-end gap-2 border-t border-line pt-4">

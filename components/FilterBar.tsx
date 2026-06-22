@@ -9,7 +9,7 @@ import {
   type ItemStatus,
 } from "@/lib/types";
 
-const TYPES: ItemType[] = ["deploy", "bug", "action", "support", "qa"];
+const TYPES: ItemType[] = ["bug", "product", "support", "action"];
 const STATUSES: ItemStatus[] = [
   "backlog",
   "in_progress",

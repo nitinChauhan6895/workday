@@ -12,6 +12,15 @@ function str(form: FormData, key: string): string | null {
   return v === "" ? null : v;
 }
 
+function json(form: FormData, key: string): any[] {
+  try {
+    const v = JSON.parse((form.get(key) ?? "[]").toString());
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+}
+
 // Best-effort activity log; never blocks the main mutation.
 async function logEvent(
   supabase: SB,
@@ -26,6 +35,8 @@ async function logEvent(
   }
 }
 
+// Note: meeting_id is intentionally NOT here — it's set only via the capture
+// view and must be preserved across edits.
 function buildPayload(form: FormData) {
   return {
     title: str(form, "title") ?? "Untitled",
@@ -34,11 +45,12 @@ function buildPayload(form: FormData) {
     client_id: str(form, "client_id"),
     status: (str(form, "status") ?? "backlog") as ItemStatus,
     priority: str(form, "priority") ?? "med",
-    owner: str(form, "owner") ?? "me",
+    owner: str(form, "owner") ?? "ic",
     assigned_dev: str(form, "assigned_dev"),
     due_date: str(form, "due_date"),
-    meeting_id: str(form, "meeting_id"),
-    external_link: str(form, "external_link"),
+    language: str(form, "language"),
+    links: json(form, "links"),
+    checklist: json(form, "checklist"),
     flag_for_standup: form.get("flag_for_standup") != null,
   };
 }

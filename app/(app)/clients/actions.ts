@@ -5,11 +5,20 @@ import { redirect } from "next/navigation";
 import { createClient as createSupabase } from "@/lib/supabase/server";
 import type { Product } from "@/lib/types";
 
-const PRODUCTS: Product[] = ["ASR", "STT", "TTS"];
+const PRODUCTS: Product[] = ["Voicebot", "RTS", "AQM", "ImporterFlow"];
 
 function str(form: FormData, key: string): string | null {
   const v = (form.get(key) ?? "").toString().trim();
   return v === "" ? null : v;
+}
+
+function json(form: FormData, key: string): any[] {
+  try {
+    const v = JSON.parse((form.get(key) ?? "[]").toString());
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
 }
 
 function buildPayload(form: FormData) {
@@ -24,15 +33,15 @@ function buildPayload(form: FormData) {
   return {
     name: str(form, "name") ?? "Untitled client",
     products,
+    languages: json(form, "languages") as string[],
     stage: str(form, "stage") ?? "onboarding",
     progress_mode: mode,
     progress_manual: manual,
-    primary_contact: str(form, "primary_contact"),
-    contact_email: str(form, "contact_email"),
     kickoff_date: str(form, "kickoff_date"),
     target_golive: str(form, "target_golive"),
-    link: str(form, "link"),
+    links: json(form, "links"),
     notes: str(form, "notes"),
+    checklist: json(form, "checklist"),
   };
 }
 

@@ -2,6 +2,23 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Client, Item, Meeting, ItemEvent, AppSettings } from "./types";
 
+// Coerce array-ish columns so the UI never sees null/undefined (e.g. pre-migration).
+function arr<T>(v: any): T[] {
+  return Array.isArray(v) ? v : [];
+}
+function normItem(r: any): Item {
+  return { ...r, links: arr(r.links), checklist: arr(r.checklist) } as Item;
+}
+function normClient(r: any): Client {
+  return {
+    ...r,
+    products: arr(r.products),
+    languages: arr(r.languages),
+    links: arr(r.links),
+    checklist: arr(r.checklist),
+  } as Client;
+}
+
 export async function getSettings(): Promise<AppSettings | null> {
   const supabase = createClient();
   // app_settings may not be migrated yet — degrade gracefully.
@@ -17,13 +34,13 @@ export async function getItems(): Promise<Item[]> {
     .select("*")
     .order("position", { ascending: true })
     .order("created_at", { ascending: true });
-  return (data ?? []) as Item[];
+  return (data ?? []).map(normItem);
 }
 
 export async function getItem(id: string): Promise<Item | null> {
   const supabase = createClient();
   const { data } = await supabase.from("items").select("*").eq("id", id).maybeSingle();
-  return (data as Item) ?? null;
+  return data ? normItem(data) : null;
 }
 
 export async function getClients(): Promise<Client[]> {
@@ -32,13 +49,13 @@ export async function getClients(): Promise<Client[]> {
     .from("clients")
     .select("*")
     .order("name", { ascending: true });
-  return (data ?? []) as Client[];
+  return (data ?? []).map(normClient);
 }
 
 export async function getClient(id: string): Promise<Client | null> {
   const supabase = createClient();
   const { data } = await supabase.from("clients").select("*").eq("id", id).maybeSingle();
-  return (data as Client) ?? null;
+  return data ? normClient(data) : null;
 }
 
 export async function getMeetings(): Promise<Meeting[]> {

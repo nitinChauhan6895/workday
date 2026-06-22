@@ -1,12 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  getItem,
-  getClients,
-  getMeetings,
-  getMeeting,
-  getItemEvents,
-} from "@/lib/data";
+import { getItem, getClients, getMeeting, getItemEvents } from "@/lib/data";
 import { updateItem } from "../actions";
 import ItemForm from "@/components/ItemForm";
 import DeleteItemButton from "@/components/DeleteItemButton";
@@ -19,9 +13,8 @@ export default async function ItemDetailPage({ params }: { params: { id: string 
   const item = await getItem(params.id);
   if (!item) notFound();
 
-  const [clients, meetings, sourceMeeting, events] = await Promise.all([
+  const [clients, sourceMeeting, events] = await Promise.all([
     getClients(),
-    getMeetings(),
     item.meeting_id ? getMeeting(item.meeting_id) : Promise.resolve(null),
     getItemEvents(item.id),
   ]);
@@ -59,7 +52,6 @@ export default async function ItemDetailPage({ params }: { params: { id: string 
       <ItemForm
         action={update}
         clients={clients}
-        meetings={meetings}
         initial={item}
         submitLabel="Save changes"
       />

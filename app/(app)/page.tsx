@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getItems, getClients, getMeetings, clientsById } from "@/lib/data";
+import { createClient } from "@/lib/supabase/server";
 import {
   dashboardStats,
   clientProgress,
@@ -15,15 +16,18 @@ import { STAGE_META } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [items, clients, meetings] = await Promise.all([
+  const [items, clients, meetings, { data: { user } }] = await Promise.all([
     getItems(),
     getClients(),
     getMeetings(),
+    createClient().auth.getUser(),
   ]);
   const clientMap = clientsById(clients);
   const today = todayISO();
   const now = new Date();
   const greeting = greetingFor(now);
+  const meta = (user?.user_metadata ?? {}) as Record<string, string>;
+  const fullName = [meta.first_name, meta.last_name].filter(Boolean).join(" ");
 
   const todays = items
     .filter(
@@ -44,9 +48,11 @@ export default async function DashboardPage() {
   return (
     <div>
       <RealtimeRefresh />
-      <div className="mb-6 flex items-end justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-ink">{greeting}</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-ink">
+            {greeting}{fullName ? `, ${meta.first_name}` : ""}
+          </h1>
           <p className="mt-0.5 text-[13px] text-subtle">
             {now.toLocaleDateString("en-US", {
               weekday: "long",
@@ -55,12 +61,28 @@ export default async function DashboardPage() {
             })}
           </p>
         </div>
-        <Link
-          href="/items/new"
-          className="shrink-0 rounded-lg bg-accent px-3 py-2 text-[13px] font-medium text-white transition hover:bg-accent-dark"
-        >
-          New item
-        </Link>
+        <div className="flex items-center gap-2">
+          {fullName && (
+            <span className="mr-1 hidden items-center gap-2 sm:flex">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-soft text-[12px] font-semibold text-accent">
+                {(meta.first_name?.[0] ?? "") + (meta.last_name?.[0] ?? "")}
+              </span>
+              <span className="text-[13px] font-medium text-ink">{fullName}</span>
+            </span>
+          )}
+          <Link
+            href="/items/new"
+            className="shrink-0 rounded-lg bg-accent px-3 py-2 text-[13px] font-medium text-white transition hover:bg-accent-dark"
+          >
+            New item
+          </Link>
+          <Link
+            href="/clients/new"
+            className="shrink-0 rounded-lg border border-line bg-card px-3 py-2 text-[13px] font-medium text-ink transition hover:bg-canvas"
+          >
+            New client
+          </Link>
+        </div>
       </div>
 
       {firstRun && (
@@ -108,75 +130,72 @@ export default async function DashboardPage() {
           </div>
         </section>
 
-        <div className="flex flex-col gap-6">
-          <section>
-            <SectionHeading title="Clients" href="/clients" />
-            <div className="card divide-y divide-line/70 overflow-hidden">
-              {clients.length === 0 ? (
-                <Empty>No clients yet.</Empty>
-              ) : (
-                clients.map((c) => {
-                  const pct = clientProgress(c, items);
-                  return (
-                    <Link
-                      key={c.id}
-                      href={`/clients/${c.id}`}
-                      className="block px-4 py-3 transition hover:bg-canvas"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="truncate text-[13px] font-medium text-ink">
-                          {c.name}
-                        </span>
-                        <span className="text-[11px] text-muted">
-                          {STAGE_META[c.stage].label}
-                        </span>
-                      </div>
-                      <div className="mt-2 flex items-center gap-2">
-                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
-                          <div
-                            className="h-full rounded-full bg-accent"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                        <span className="w-8 text-right text-[11px] tabular-nums text-subtle">
-                          {pct}%
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
-            </div>
-          </section>
-
-          <section>
-            <SectionHeading title="Today's meetings" href="/meetings" />
-            <div className="card divide-y divide-line/70 overflow-hidden">
-              {todaysMeetings.length === 0 ? (
-                <Empty>No meetings today.</Empty>
-              ) : (
-                todaysMeetings.map((m) => (
+        <section>
+          <SectionHeading title="Clients" href="/clients" />
+          <div className="card divide-y divide-line/70 overflow-hidden">
+            {clients.length === 0 ? (
+              <Empty>No clients yet.</Empty>
+            ) : (
+              clients.map((c) => {
+                const pct = clientProgress(c, items);
+                return (
                   <Link
-                    key={m.id}
-                    href={`/meetings/${m.id}`}
+                    key={c.id}
+                    href={`/clients/${c.id}`}
                     className="block px-4 py-3 transition hover:bg-canvas"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-[13px] text-ink">{m.title}</span>
-                      <span className="shrink-0 text-[11px] tabular-nums text-muted">
-                        {new Date(m.datetime).toLocaleTimeString("en-US", {
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
-                      </span>
+                    <div className="flex items-center justify-between">
+                      <span className="truncate text-[13px] font-medium text-ink">{c.name}</span>
+                      <span className="text-[11px] text-muted">{STAGE_META[c.stage].label}</span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
+                        <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="w-8 text-right text-[11px] tabular-nums text-subtle">{pct}%</span>
                     </div>
                   </Link>
-                ))
-              )}
-            </div>
-          </section>
-        </div>
+                );
+              })
+            )}
+          </div>
+        </section>
       </div>
+
+      {/* Today's meetings — full width, with Join buttons */}
+      <section className="mt-6">
+        <SectionHeading title="Today's meetings" href="/meetings" />
+        <div className="card divide-y divide-line/70 overflow-hidden">
+          {todaysMeetings.length === 0 ? (
+            <Empty>No meetings today.</Empty>
+          ) : (
+            todaysMeetings.map((m) => (
+              <div key={m.id} className="flex items-center gap-3 px-4 py-3 transition hover:bg-canvas">
+                <div className="w-16 shrink-0 text-[12px] tabular-nums text-accent">
+                  {new Date(m.datetime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                </div>
+                <Link href={`/meetings/${m.id}`} className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] font-medium text-ink">{m.title}</div>
+                  <div className="mt-0.5 truncate text-[11px] text-muted">
+                    {m.client_id ? clientMap.get(m.client_id)?.name ?? "Internal" : "Internal"}
+                    {m.attendees ? ` · ${m.attendees}` : ""}
+                  </div>
+                </Link>
+                {m.join_url && (
+                  <a
+                    href={m.join_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="shrink-0 rounded-md bg-[#5059C9] px-3 py-1.5 text-[12px] font-medium text-white transition hover:opacity-90"
+                  >
+                    Join
+                  </a>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </section>
     </div>
   );
 }

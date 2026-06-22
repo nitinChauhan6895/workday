@@ -1,7 +1,7 @@
-// WorkDay data model. One shared `items` table is the core — deployments, bugs,
-// action items, support threads and QA are the same object distinguished by `type`.
+// WorkDay data model. One shared `items` table is the core — bugs, product,
+// support and action items are the same object distinguished by `type`.
 
-export type ItemType = "deploy" | "bug" | "action" | "support" | "qa";
+export type ItemType = "bug" | "product" | "support" | "action";
 
 export type ItemStatus =
   | "backlog"
@@ -13,16 +13,23 @@ export type ItemStatus =
 
 export type Priority = "high" | "med" | "low";
 
-export type Owner = "me" | "dev" | "client";
+export type Owner = "product" | "support" | "ic";
 
-export type Product = "ASR" | "STT" | "TTS";
+export type Product = "Voicebot" | "RTS" | "AQM" | "ImporterFlow";
 
-export type ClientStage =
-  | "onboarding"
-  | "in_progress"
-  | "in_qa"
-  | "live"
-  | "on_hold";
+export type ClientStage = "onboarding" | "in_progress" | "in_uat" | "live" | "hold";
+
+// A titled link (Teams channel, files, mail thread, ticket, …).
+export interface LinkItem {
+  title: string;
+  url: string;
+}
+
+// A checklist row used inside notes/descriptions.
+export interface ChecklistItem {
+  text: string;
+  done: boolean;
+}
 
 export interface Item {
   id: string;
@@ -36,8 +43,11 @@ export interface Item {
   assigned_dev: string | null;
   due_date: string | null; // ISO date
   flag_for_standup: boolean;
-  meeting_id: string | null; // the meeting this came from
-  external_link: string | null; // Jira / ticket / thread URL
+  meeting_id: string | null; // the meeting this came from (set via capture view)
+  external_link: string | null; // legacy single link (superseded by `links`)
+  language: string | null; // delivery language, scoped to the client
+  links: LinkItem[];
+  checklist: ChecklistItem[];
   created_at: string;
   updated_at: string;
   position: number; // for board ordering
@@ -47,15 +57,18 @@ export interface Client {
   id: string;
   name: string;
   products: Product[];
+  languages: string[]; // STT/TTS delivery languages
   stage: ClientStage;
   progress_mode: "auto" | "manual"; // auto = % of items done
   progress_manual: number; // 0-100, used when progress_mode = manual
-  primary_contact: string | null;
-  contact_email: string | null;
   kickoff_date: string | null;
   target_golive: string | null;
-  link: string | null;
+  links: LinkItem[];
   notes: string | null;
+  checklist: ChecklistItem[];
+  // Legacy (no longer surfaced in the form):
+  primary_contact: string | null;
+  contact_email: string | null;
 }
 
 export interface Meeting {
@@ -76,6 +89,13 @@ export interface AppSettings {
   calendar_last_synced_at: string | null;
 }
 
+// Profile lives in Supabase auth user-metadata.
+export interface Profile {
+  first_name: string;
+  last_name: string;
+  organisation: string;
+}
+
 export type ItemEventKind =
   | "created"
   | "status"
@@ -93,15 +113,17 @@ export interface ItemEvent {
 
 // ----- Display metadata (labels + badge styling) -----
 
-export const ITEM_TYPE_META: Record<
-  ItemType,
-  { label: string; chip: string }
-> = {
-  deploy: { label: "Deploy", chip: "bg-[#E8F0FE] text-[#1A56DB]" }, // blue
+export const ITEM_TYPE_META: Record<ItemType, { label: string; chip: string }> = {
   bug: { label: "Bug", chip: "bg-[#FDECE8] text-[#D9480F]" }, // coral
-  action: { label: "Action", chip: "bg-[#E4F4F0] text-[#0E7C66]" }, // teal
+  product: { label: "Product", chip: "bg-[#E8F0FE] text-[#1A56DB]" }, // blue
   support: { label: "Support", chip: "bg-[#FCE9F1] text-[#C81E78]" }, // pink
-  qa: { label: "QA", chip: "bg-[#FEF2E2] text-[#B45309]" }, // amber
+  action: { label: "Action", chip: "bg-[#E4F4F0] text-[#0E7C66]" }, // teal
+};
+
+export const OWNER_META: Record<Owner, { label: string }> = {
+  product: { label: "Product" },
+  support: { label: "Support" },
+  ic: { label: "IC" },
 };
 
 export const PRIORITY_META: Record<
@@ -125,7 +147,7 @@ export const STATUS_META: Record<ItemStatus, { label: string; chip: string }> = 
 export const STAGE_META: Record<ClientStage, { label: string }> = {
   onboarding: { label: "Onboarding" },
   in_progress: { label: "In progress" },
-  in_qa: { label: "In QA" },
+  in_uat: { label: "In UAT" },
   live: { label: "Live" },
-  on_hold: { label: "On hold" },
+  hold: { label: "Hold" },
 };

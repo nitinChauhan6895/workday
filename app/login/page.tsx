@@ -13,6 +13,9 @@ const inputCls =
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("signin");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [organisation, setOrganisation] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
@@ -33,9 +36,21 @@ export default function LoginPage() {
     const supabase = createClient();
 
     if (mode === "signup") {
+      if (!firstName.trim() || !lastName.trim()) {
+        setPending(false);
+        setError("Please enter your first and last name.");
+        return;
+      }
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
+        options: {
+          data: {
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            organisation: organisation.trim(),
+          },
+        },
       });
       if (error) {
         setPending(false);
@@ -80,6 +95,38 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="card space-y-3 p-6">
+          {mode === "signup" && (
+            <>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  required
+                  autoComplete="given-name"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className={inputCls}
+                />
+                <input
+                  type="text"
+                  required
+                  autoComplete="family-name"
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+              <input
+                type="text"
+                autoComplete="organization"
+                placeholder="Organisation"
+                value={organisation}
+                onChange={(e) => setOrganisation(e.target.value)}
+                className={inputCls}
+              />
+            </>
+          )}
           <input
             type="email"
             required
