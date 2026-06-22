@@ -131,9 +131,9 @@ export const PRIORITY_META: Record<
   Priority,
   { label: string; chip: string; dot: string }
 > = {
-  high: { label: "High", chip: "bg-[#FDE8E8] text-[#C81E1E]", dot: "bg-[#E5484D]" },
-  med: { label: "Med", chip: "bg-[#FEF2E2] text-[#B45309]", dot: "bg-[#F2A23B]" },
-  low: { label: "Low", chip: "bg-[#E7F6EC] text-[#1A7F37]", dot: "bg-[#46A758]" },
+  high: { label: "High", chip: "bg-[#FBE3E3] text-[#991B1B]", dot: "bg-[#991B1B]" }, // dark red
+  med: { label: "Med", chip: "bg-[#FEEBD9] text-[#EA580C]", dot: "bg-[#EA580C]" }, // orange
+  low: { label: "Low", chip: "bg-[#FBF3D0] text-[#B7791F]", dot: "bg-[#EAB308]" }, // yellow
 };
 
 export const STATUS_META: Record<ItemStatus, { label: string; chip: string }> = {
