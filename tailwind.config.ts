@@ -2,7 +2,11 @@ import type { Config } from "tailwindcss";
 
 // WorkDay design language: clean, light, card-based — a calm Linear/Things hybrid.
 const config: Config = {
-  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}", // badge color classes live in lib/types.ts
+  ],
   theme: {
     extend: {
       colors: {
