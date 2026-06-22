@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/data";
+import { APP_VERSION } from "@/lib/version";
 import PageHeader from "@/components/PageHeader";
 import SignOutButton from "@/components/SignOutButton";
 import CalendarSync from "@/components/CalendarSync";
@@ -20,7 +21,7 @@ export default async function SettingsPage() {
         <Row label="Account" value={user?.email ?? "—"} action={<SignOutButton />} />
         <Row label="Sync" value="Supabase realtime — live" />
         <Row label="Theme" value="Light" />
-        <Row label="Version" value="0.3.0 · Phase 9 (calendar sync)" />
+        <Row label="Version" value={APP_VERSION} />
       </div>
 
       <section>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { APP_VERSION } from "@/lib/version";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: GridIcon },
@@ -57,7 +58,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
 
-      <div className="px-2 pt-3 text-[11px] text-muted">v0.1 · Phase 1</div>
+      <div className="px-2 pt-3 text-[11px] text-muted">v{APP_VERSION}</div>
     </aside>
   );
 }
