@@ -28,11 +28,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const isProd = process.env.NODE_ENV === "production";
   return (
     <html lang="en">
       <body>
         {children}
-        <ServiceWorkerRegister />
+        {isProd ? <ServiceWorkerRegister /> : <ServiceWorkerKiller />}
       </body>
     </html>
   );
@@ -47,6 +48,33 @@ function ServiceWorkerRegister() {
             window.addEventListener('load', function () {
               navigator.serviceWorker.register('/sw.js').catch(function () {});
             });
+          }
+        `,
+      }}
+    />
+  );
+}
+
+// In dev, the SW caches /_next/static/ cache-first; those chunks change on every
+// edit, so a stale cached webpack.js causes "Cannot read properties of undefined
+// (reading 'call')". Unregister any SW and clear its caches in development.
+function ServiceWorkerKiller() {
+  return (
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
+              var had = regs.length > 0;
+              Promise.all(regs.map(function (r) { return r.unregister(); })).then(function () {
+                if (window.caches && caches.keys) {
+                  caches.keys().then(function (keys) {
+                    keys.forEach(function (k) { caches.delete(k); });
+                  });
+                }
+                if (had) location.reload();
+              });
+            }).catch(function () {});
           }
         `,
       }}
