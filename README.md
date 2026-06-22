@@ -1,4 +1,4 @@
-# WorkDay
+# MyDay
 
 Personal productivity PWA for client-facing ASR / TTS / STT deployment work —
 deployments, bugs, action items, support threads, QA, meetings and dev standups.

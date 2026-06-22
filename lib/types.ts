@@ -1,4 +1,4 @@
-// WorkDay data model. One shared `items` table is the core — bugs, product,
+// MyDay data model. One shared `items` table is the core — bugs, product,
 // support and action items are the same object distinguished by `type`.
 
 export type ItemType = "bug" | "product" | "support" | "action";
@@ -13,7 +13,7 @@ export type ItemStatus =
 
 export type Priority = "high" | "med" | "low";
 
-export type Owner = "product" | "support" | "ic";
+export type Owner = "product" | "support" | "ic" | "dev";
 
 export type Product = "Voicebot" | "RTS" | "AQM" | "ImporterFlow";
 
@@ -124,6 +124,7 @@ export const OWNER_META: Record<Owner, { label: string }> = {
   product: { label: "Product" },
   support: { label: "Support" },
   ic: { label: "IC" },
+  dev: { label: "Dev" },
 };
 
 export const PRIORITY_META: Record<

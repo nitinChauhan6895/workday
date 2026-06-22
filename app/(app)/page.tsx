@@ -6,10 +6,10 @@ import {
   clientProgress,
   isToday,
   isOpen,
-  byPriorityThenDue,
   todayISO,
+  addBusinessDays,
 } from "@/lib/derive";
-import ItemRow from "@/components/ItemRow";
+import DashboardItems from "@/components/DashboardItems";
 import RealtimeRefresh from "@/components/RealtimeRefresh";
 import { STAGE_META } from "@/lib/types";
 
@@ -29,13 +29,14 @@ export default async function DashboardPage() {
   const meta = (user?.user_metadata ?? {}) as Record<string, string>;
   const fullName = [meta.first_name, meta.last_name].filter(Boolean).join(" ");
 
-  const todays = items
-    .filter(
-      (i) =>
-        isOpen(i) && ((i.due_date && i.due_date <= today) || i.priority === "high"),
-    )
-    .sort(byPriorityThenDue)
-    .slice(0, 8);
+  // Open items due within the next 3 working days (Sat/Sun excluded), plus
+  // anything overdue — newest-modified first.
+  const windowEnd = addBusinessDays(today, 3);
+  const dueItems = items
+    .filter((i) => isOpen(i) && !!i.due_date && i.due_date <= windowEnd)
+    .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+
+  const topClients = clients.slice(0, 3);
 
   const todaysMeetings = meetings
     .filter((m) => isToday(m.datetime, today))
@@ -87,7 +88,7 @@ export default async function DashboardPage() {
 
       {firstRun && (
         <div className="mb-6 card p-6">
-          <h2 className="text-[15px] font-semibold text-ink">Welcome to WorkDay 👋</h2>
+          <h2 className="text-[15px] font-semibold text-ink">Welcome to MyDay 👋</h2>
           <p className="mt-1 text-[13px] text-subtle">
             Nothing here yet. Start by adding a client, then capture the items
             and meetings that hang off it.
@@ -117,26 +118,17 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <section className="lg:col-span-2">
-          <SectionHeading title="Today's items" href="/items" />
-          <div className="card divide-y divide-line/70 overflow-hidden">
-            {todays.length === 0 ? (
-              <Empty>Nothing urgent today.</Empty>
-            ) : (
-              todays.map((i) => (
-                <ItemRow key={i.id} item={i} client={clientMap.get(i.client_id ?? "")} />
-              ))
-            )}
-          </div>
-        </section>
+        <div className="lg:col-span-2">
+          <DashboardItems items={dueItems} clients={clients} />
+        </div>
 
         <section>
           <SectionHeading title="Clients" href="/clients" />
           <div className="card divide-y divide-line/70 overflow-hidden">
-            {clients.length === 0 ? (
+            {topClients.length === 0 ? (
               <Empty>No clients yet.</Empty>
             ) : (
-              clients.map((c) => {
+              topClients.map((c) => {
                 const pct = clientProgress(c, items);
                 return (
                   <Link

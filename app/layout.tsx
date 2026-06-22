@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "WorkDay",
+  title: "MyDay",
   description:
     "Personal productivity workspace for client deployments, bugs, meetings and standups.",
   manifest: "/manifest.webmanifest",
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "WorkDay",
+    title: "MyDay",
   },
 };
 

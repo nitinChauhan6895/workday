@@ -20,10 +20,10 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     <aside className="flex h-full w-56 shrink-0 flex-col border-r border-line bg-card px-3 py-4">
       <div className="flex items-center gap-2 px-2 pb-4">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-[13px] font-semibold text-white">
-          W
+          M
         </div>
         <span className="text-[15px] font-semibold tracking-tight text-ink">
-          WorkDay
+          MyDay
         </span>
       </div>
 

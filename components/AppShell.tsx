@@ -43,9 +43,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </button>
           <div className="flex items-center gap-2">
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-accent text-[12px] font-semibold text-white">
-              W
+              M
             </div>
-            <span className="text-[14px] font-semibold tracking-tight text-ink">WorkDay</span>
+            <span className="text-[14px] font-semibold tracking-tight text-ink">MyDay</span>
           </div>
         </header>
 

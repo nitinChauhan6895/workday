@@ -52,6 +52,11 @@ export default function ItemRow({
       </Link>
 
       <div className="flex shrink-0 items-center gap-1.5">
+        {item.language && (
+          <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent">
+            {item.language}
+          </span>
+        )}
         <TypeBadge type={item.type} />
         {!done && <PriorityBadge priority={item.priority} />}
         {trailing}

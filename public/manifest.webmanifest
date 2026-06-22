@@ -1,6 +1,6 @@
 {
-  "name": "WorkDay",
-  "short_name": "WorkDay",
+  "name": "MyDay",
+  "short_name": "MyDay",
   "description": "Personal productivity workspace for client deployments, bugs, meetings and standups.",
   "start_url": "/",
   "scope": "/",

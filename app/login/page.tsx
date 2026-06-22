@@ -86,9 +86,9 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-lg font-semibold text-white">
-            W
+            M
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">WorkDay</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">MyDay</h1>
           <p className="mt-1 text-[13px] text-subtle">
             {mode === "signin" ? "Sign in to your workspace." : "Create your account."}
           </p>

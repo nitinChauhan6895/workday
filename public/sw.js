@@ -1,4 +1,4 @@
-// Minimal offline-friendly service worker for WorkDay.
+// Minimal offline-friendly service worker for MyDay.
 // Strategy: cache-first ONLY for truly-immutable build assets; network-first
 // (with cache fallback) for everything else. We deliberately never cache
 // Next.js App Router RSC/data requests — caching those makes freshly added

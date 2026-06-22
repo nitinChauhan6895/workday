@@ -4,6 +4,7 @@ import { getClient, getItems, getMeetings } from "@/lib/data";
 import { clientProgress } from "@/lib/derive";
 import { STAGE_META } from "@/lib/types";
 import ItemRow from "@/components/ItemRow";
+import ClientOpenItems from "@/components/ClientOpenItems";
 
 export const dynamic = "force-dynamic";
 
@@ -114,15 +115,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
         )}
       </div>
 
-      <Section title={`Open items (${open.length})`}>
-        {open.length ? (
-          <div className="card divide-y divide-line/70 overflow-hidden">
-            {open.map((i) => <ItemRow key={i.id} item={i} client={client} />)}
-          </div>
-        ) : (
-          <Empty>No open items.</Empty>
-        )}
-      </Section>
+      <ClientOpenItems items={open} client={client} />
 
       {done.length > 0 && (
         <Section title={`Done (${done.length})`}>

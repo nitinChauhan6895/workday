@@ -26,7 +26,7 @@ const STATUSES: ItemStatus[] = [
   "done",
 ];
 const PRIORITIES: Priority[] = ["high", "med", "low"];
-const OWNERS: Owner[] = ["product", "support", "ic"];
+const OWNERS: Owner[] = ["product", "support", "ic", "dev"];
 
 const inputCls =
   "w-full rounded-lg border border-line bg-card px-3 py-2 text-[13px] text-ink outline-none placeholder:text-muted focus:border-accent";

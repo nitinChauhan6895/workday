@@ -38,7 +38,7 @@ export default async function SettingsPage() {
         <div className="flex items-center justify-between">
           <div>
             <div className="text-[13px] text-ink">{user?.email ?? "—"}</div>
-            <div className="text-[12px] text-muted">Realtime sync · WorkDay v{APP_VERSION}</div>
+            <div className="text-[12px] text-muted">Realtime sync · MyDay v{APP_VERSION}</div>
           </div>
           <SignOutButton />
         </div>
