@@ -156,8 +156,14 @@ function WeekView({
                       href={`/meetings/${m.id}`}
                       className="block px-3 py-2 transition hover:bg-canvas"
                     >
-                      <div className="text-[11px] tabular-nums text-accent">
+                      <div className="flex items-center gap-1 text-[11px] tabular-nums text-accent">
                         {fmtTime(m.datetime)}
+                        {m.join_url && (
+                          <span
+                            className="inline-block h-1.5 w-1.5 rounded-full bg-[#5059C9]"
+                            title="Teams meeting"
+                          />
+                        )}
                       </div>
                       <div className="truncate text-[12px] text-ink" title={m.title}>
                         {m.title}
@@ -241,14 +247,11 @@ function TimeRow({
   const client = meeting.client_id ? clientMap.get(meeting.client_id) : null;
   const d = new Date(meeting.datetime);
   return (
-    <Link
-      href={`/meetings/${meeting.id}`}
-      className="flex items-center gap-3 px-4 py-3 transition hover:bg-canvas"
-    >
+    <div className="flex items-center gap-3 px-4 py-3 transition hover:bg-canvas">
       <div className="w-16 shrink-0 text-[12px] tabular-nums text-accent">
         {fmtTime(meeting.datetime)}
       </div>
-      <div className="min-w-0 flex-1">
+      <Link href={`/meetings/${meeting.id}`} className="min-w-0 flex-1">
         <div className="truncate text-[13px] font-medium text-ink">{meeting.title}</div>
         <div className="mt-0.5 text-[11px] text-muted">
           {client ? client.name : "Internal"}
@@ -258,8 +261,18 @@ function TimeRow({
               ? ` · ${meeting.attendees}`
               : ""}
         </div>
-      </div>
-    </Link>
+      </Link>
+      {meeting.join_url && (
+        <a
+          href={meeting.join_url}
+          target="_blank"
+          rel="noreferrer"
+          className="shrink-0 rounded-md bg-[#5059C9] px-2 py-1 text-[11px] font-medium text-white transition hover:opacity-90"
+        >
+          Join
+        </a>
+      )}
+    </div>
   );
 }
 

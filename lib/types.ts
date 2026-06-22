@@ -67,6 +67,7 @@ export interface Meeting {
   raw_notes: string | null;
   created_at: string;
   ics_uid: string | null; // calendar-sourced meetings; null if created manually
+  join_url: string | null; // Teams/online meeting join link, from calendar sync
 }
 
 export interface AppSettings {

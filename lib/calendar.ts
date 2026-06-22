@@ -13,6 +13,19 @@ export interface ParsedMeeting {
   title: string;
   datetime: string; // ISO
   attendees: string | null;
+  join_url: string | null;
+}
+
+// Outlook puts the Teams join link in the event description (and sometimes
+// location), not a dedicated property. Pull the first online-meeting URL.
+function joinUrlOf(ev: any): string | null {
+  const haystack = `${ev.description ?? ""}\n${ev.location ?? ""}`;
+  const m = haystack.match(
+    /https:\/\/(?:teams\.microsoft\.com\/l\/meetup-join|teams\.live\.com\/meet)\/\S+/i,
+  );
+  if (!m) return null;
+  // Trim trailing wrappers/punctuation that can ride along after folding.
+  return m[0].replace(/[>"',.\]]+$/, "");
 }
 
 function attendeesOf(ev: any): string | null {
@@ -49,6 +62,7 @@ export function parseIcsToMeetings(icsText: string): ParsedMeeting[] {
     const uid = ev.uid ?? key;
     const title = (ev.summary ?? "Untitled meeting").toString();
     const attendees = attendeesOf(ev);
+    const join_url = joinUrlOf(ev);
 
     if (ev.rrule) {
       // Recurring series — expand occurrences within the window.
@@ -68,7 +82,7 @@ export function parseIcsToMeetings(icsText: string): ParsedMeeting[] {
       for (const d of dates) {
         const iso = d.toISOString();
         if (exdates[iso.slice(0, 10)]) continue;
-        out.push({ ics_uid: `${uid}|${iso}`, title, datetime: iso, attendees });
+        out.push({ ics_uid: `${uid}|${iso}`, title, datetime: iso, attendees, join_url });
       }
     } else if (ev.start) {
       const start = new Date(ev.start);
@@ -78,6 +92,7 @@ export function parseIcsToMeetings(icsText: string): ParsedMeeting[] {
           title,
           datetime: start.toISOString(),
           attendees,
+          join_url,
         });
       }
     }

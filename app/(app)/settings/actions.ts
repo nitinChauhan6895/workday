@@ -65,6 +65,7 @@ export async function syncCalendar(): Promise<SyncResult> {
     title: m.title,
     datetime: m.datetime,
     attendees: m.attendees,
+    join_url: m.join_url,
   }));
 
   const { error } = await supabase
