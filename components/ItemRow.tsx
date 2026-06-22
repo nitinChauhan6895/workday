@@ -21,9 +21,11 @@ function formatDue(
 export default function ItemRow({
   item,
   client,
+  trailing,
 }: {
   item: Item;
   client?: Client | null;
+  trailing?: React.ReactNode;
 }) {
   const today = todayISO();
   const done = item.status === "done";
@@ -52,6 +54,7 @@ export default function ItemRow({
       <div className="flex shrink-0 items-center gap-1.5">
         <TypeBadge type={item.type} />
         {!done && <PriorityBadge priority={item.priority} />}
+        {trailing}
       </div>
     </div>
   );

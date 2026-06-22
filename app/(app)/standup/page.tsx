@@ -2,6 +2,7 @@ import { getItems, getClients, clientsById } from "@/lib/data";
 import type { Item } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import ItemRow from "@/components/ItemRow";
+import StandupFlagToggle from "@/components/StandupFlagToggle";
 import RealtimeRefresh from "@/components/RealtimeRefresh";
 
 export const dynamic = "force-dynamic";
@@ -10,9 +11,12 @@ export default async function StandupPage() {
   const [items, clients] = await Promise.all([getItems(), getClients()]);
   const clientMap = clientsById(clients);
 
-  // Everything blocked on dev OR flagged for standup.
+  // Open items that are blocked on dev OR flagged for standup. Ticking an item
+  // done removes it from the call list.
   const relevant = items.filter(
-    (i) => i.status === "blocked_on_dev" || i.flag_for_standup,
+    (i) =>
+      i.status !== "done" &&
+      (i.status === "blocked_on_dev" || i.flag_for_standup),
   );
 
   // Group by assigned dev (unassigned last).
@@ -53,7 +57,12 @@ export default async function StandupPage() {
               </div>
               <div className="card divide-y divide-line/70 overflow-hidden">
                 {list.map((i) => (
-                  <ItemRow key={i.id} item={i} client={clientMap.get(i.client_id ?? "")} />
+                  <ItemRow
+                    key={i.id}
+                    item={i}
+                    client={clientMap.get(i.client_id ?? "")}
+                    trailing={i.flag_for_standup ? <StandupFlagToggle id={i.id} /> : null}
+                  />
                 ))}
               </div>
             </section>

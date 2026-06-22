@@ -97,6 +97,17 @@ export async function deleteItem(id: string) {
   redirect("/items");
 }
 
+// Used by the Standup view to clear an item from the call without completing it.
+export async function setStandupFlag(id: string, flag: boolean) {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("items")
+    .update({ flag_for_standup: flag })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
+}
+
 // Used by the inline list checkboxes.
 export async function toggleItemDone(id: string, done: boolean) {
   const supabase = createClient();
