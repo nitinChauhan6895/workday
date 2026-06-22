@@ -1,21 +1,26 @@
 import Link from "next/link";
+import { getClients, getMeetings } from "@/lib/data";
+import { createItem } from "../actions";
 import PageHeader from "@/components/PageHeader";
+import ItemForm from "@/components/ItemForm";
 
-export default function NewItemPage() {
+export const dynamic = "force-dynamic";
+
+export default async function NewItemPage() {
+  const [clients, meetings] = await Promise.all([getClients(), getMeetings()]);
+
   return (
     <div className="mx-auto max-w-2xl">
+      <Link href="/items" className="mb-4 inline-flex items-center gap-1 text-[12px] text-subtle hover:text-ink">
+        ← Items
+      </Link>
       <PageHeader title="New item" />
-      <div className="card p-6 text-[13px] text-subtle">
-        <p>
-          The New item form (title, type, client, status, priority, owner,
-          assigned dev, due date, links) is built in{" "}
-          <span className="font-medium text-ink">Phase 3 — Items</span>, once
-          Supabase is wired up.
-        </p>
-        <Link href="/items" className="mt-4 inline-block text-accent hover:underline">
-          ← Back to Items
-        </Link>
-      </div>
+      <ItemForm
+        action={createItem}
+        clients={clients}
+        meetings={meetings}
+        submitLabel="Create item"
+      />
     </div>
   );
 }

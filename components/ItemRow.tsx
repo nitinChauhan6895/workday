@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Item, Client } from "@/lib/types";
 import { isOverdue, todayISO } from "@/lib/derive";
 import { TypeBadge, PriorityBadge } from "./Badge";
+import ItemCheckbox from "./ItemCheckbox";
 
 function formatDue(
   due: string | null,
@@ -31,19 +32,7 @@ export default function ItemRow({
 
   return (
     <div className="flex items-center gap-3 px-4 py-2.5">
-      {/* Visual checkbox — interactive in Phase 3 */}
-      <span
-        className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border ${
-          done ? "border-accent bg-accent text-white" : "border-line bg-card"
-        }`}
-        aria-hidden
-      >
-        {done && (
-          <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12l5 5 9-11" />
-          </svg>
-        )}
-      </span>
+      <ItemCheckbox id={item.id} done={done} />
 
       <Link href={`/items/${item.id}`} className="min-w-0 flex-1">
         <div className="flex items-center gap-2">

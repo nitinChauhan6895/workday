@@ -1,6 +1,6 @@
 // Server-side data access. RLS scopes every query to the signed-in user.
 import { createClient } from "@/lib/supabase/server";
-import type { Client, Item, Meeting } from "./types";
+import type { Client, Item, Meeting, ItemEvent } from "./types";
 
 export async function getItems(): Promise<Item[]> {
   const supabase = createClient();
@@ -46,6 +46,18 @@ export async function getMeeting(id: string): Promise<Meeting | null> {
   const supabase = createClient();
   const { data } = await supabase.from("meetings").select("*").eq("id", id).maybeSingle();
   return (data as Meeting) ?? null;
+}
+
+export async function getItemEvents(itemId: string): Promise<ItemEvent[]> {
+  const supabase = createClient();
+  // Best-effort: if the item_events table hasn't been migrated yet, return [].
+  const { data, error } = await supabase
+    .from("item_events")
+    .select("*")
+    .eq("item_id", itemId)
+    .order("created_at", { ascending: false });
+  if (error) return [];
+  return (data ?? []) as ItemEvent[];
 }
 
 // Convenience: a Map for O(1) client lookups when rendering item lists.

@@ -1,7 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getItem, getClient, getMeeting } from "@/lib/data";
-import { TypeBadge, PriorityBadge, StatusBadge } from "@/components/Badge";
+import {
+  getItem,
+  getClients,
+  getMeetings,
+  getMeeting,
+  getItemEvents,
+} from "@/lib/data";
+import { updateItem } from "../actions";
+import ItemForm from "@/components/ItemForm";
+import DeleteItemButton from "@/components/DeleteItemButton";
+import { TypeBadge, StatusBadge } from "@/components/Badge";
+import type { ItemEvent } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -9,10 +19,14 @@ export default async function ItemDetailPage({ params }: { params: { id: string 
   const item = await getItem(params.id);
   if (!item) notFound();
 
-  const [client, meeting] = await Promise.all([
-    item.client_id ? getClient(item.client_id) : Promise.resolve(null),
+  const [clients, meetings, sourceMeeting, events] = await Promise.all([
+    getClients(),
+    getMeetings(),
     item.meeting_id ? getMeeting(item.meeting_id) : Promise.resolve(null),
+    getItemEvents(item.id),
   ]);
+
+  const update = updateItem.bind(null, item.id);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -20,84 +34,87 @@ export default async function ItemDetailPage({ params }: { params: { id: string 
         ← Items
       </Link>
 
-      <div className="card p-6">
-        <div className="mb-3 flex flex-wrap items-center gap-1.5">
-          <TypeBadge type={item.type} />
-          <StatusBadge status={item.status} />
-          <PriorityBadge priority={item.priority} />
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-semibold tracking-tight text-ink">
+            {item.title}
+          </h1>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <TypeBadge type={item.type} />
+            <StatusBadge status={item.status} />
+          </div>
         </div>
-
-        <h1 className="text-lg font-semibold tracking-tight text-ink">{item.title}</h1>
-        {item.description && (
-          <p className="mt-2 whitespace-pre-wrap text-[13px] leading-relaxed text-subtle">
-            {item.description}
-          </p>
-        )}
-
-        <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 text-[13px]">
-          <Field label="Client">
-            {client ? (
-              <Link href={`/clients/${client.id}`} className="text-accent hover:underline">
-                {client.name}
-              </Link>
-            ) : (
-              <span className="text-muted">Internal</span>
-            )}
-          </Field>
-          <Field label="Owner">{cap(item.owner)}</Field>
-          <Field label="Assigned dev">{item.assigned_dev ?? <Dash />}</Field>
-          <Field label="Due date">{item.due_date ?? <Dash />}</Field>
-          <Field label="Flagged for standup">{item.flag_for_standup ? "Yes" : "No"}</Field>
-          <Field label="From meeting">
-            {meeting ? (
-              <Link href={`/meetings/${meeting.id}`} className="text-accent hover:underline">
-                {meeting.title}
-              </Link>
-            ) : (
-              <Dash />
-            )}
-          </Field>
-          <Field label="External link">
-            {item.external_link ? (
-              <a
-                href={item.external_link}
-                target="_blank"
-                rel="noreferrer"
-                className="break-all text-accent hover:underline"
-              >
-                {item.external_link}
-              </a>
-            ) : (
-              <Dash />
-            )}
-          </Field>
-          <Field label="Updated">
-            {new Date(item.updated_at).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })}
-          </Field>
-        </dl>
-
-        <p className="mt-6 border-t border-line pt-4 text-[12px] text-muted">
-          Editing, status history and delete arrive in Phase 3.
-        </p>
+        <DeleteItemButton id={item.id} />
       </div>
+
+      {sourceMeeting && (
+        <p className="mb-4 text-[12px] text-subtle">
+          From meeting{" "}
+          <Link href={`/meetings/${sourceMeeting.id}`} className="text-accent hover:underline">
+            {sourceMeeting.title}
+          </Link>
+        </p>
+      )}
+
+      <ItemForm
+        action={update}
+        clients={clients}
+        meetings={meetings}
+        initial={item}
+        submitLabel="Save changes"
+      />
+
+      <section className="mt-6">
+        <h2 className="mb-2 px-1 text-[13px] font-semibold text-ink">Activity</h2>
+        <div className="card overflow-hidden">
+          {events.length === 0 ? (
+            <p className="px-4 py-5 text-center text-[12px] text-muted">
+              No activity yet. Changes you make are logged here.
+            </p>
+          ) : (
+            <ul className="divide-y divide-line/70">
+              {events.map((e) => (
+                <li key={e.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                  <span className="text-[12px] text-ink">{describe(e)}</span>
+                  <span className="shrink-0 text-[11px] tabular-nums text-muted">
+                    {relTime(e.created_at)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <dt className="text-[11px] uppercase tracking-wide text-muted">{label}</dt>
-      <dd className="mt-0.5 text-ink">{children}</dd>
-    </div>
-  );
+function describe(e: ItemEvent): string {
+  switch (e.kind) {
+    case "created":
+      return "Created";
+    case "completed":
+      return e.detail ? `Completed (${e.detail})` : "Marked done";
+    case "reopened":
+      return "Reopened";
+    case "status":
+      return `Status: ${e.detail ?? "changed"}`;
+    case "edited":
+      return "Edited";
+    default:
+      return e.kind;
+  }
 }
-function Dash() {
-  return <span className="text-muted">—</span>;
-}
-function cap(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
+
+function relTime(iso: string): string {
+  const then = new Date(iso).getTime();
+  const diff = Date.now() - then;
+  const min = Math.round(diff / 60000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.round(hr / 24);
+  if (day < 7) return `${day}d ago`;
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }

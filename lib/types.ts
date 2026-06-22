@@ -68,6 +68,21 @@ export interface Meeting {
   created_at: string;
 }
 
+export type ItemEventKind =
+  | "created"
+  | "status"
+  | "completed"
+  | "reopened"
+  | "edited";
+
+export interface ItemEvent {
+  id: string;
+  item_id: string;
+  kind: ItemEventKind;
+  detail: string | null;
+  created_at: string;
+}
+
 // ----- Display metadata (labels + badge styling) -----
 
 export const ITEM_TYPE_META: Record<
