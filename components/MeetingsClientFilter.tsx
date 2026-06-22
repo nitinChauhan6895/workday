@@ -13,7 +13,11 @@ export default function MeetingsClientFilter({ clients }: { clients: Client[] })
       value={client}
       onChange={(e) => {
         const v = e.target.value;
-        router.push(v ? `/meetings?client=${v}` : "/meetings");
+        const p = new URLSearchParams(params.toString());
+        if (v) p.set("client", v);
+        else p.delete("client");
+        const qs = p.toString();
+        router.push(qs ? `/meetings?${qs}` : "/meetings");
       }}
       className="rounded-lg border border-line bg-card px-2.5 py-1.5 text-[12px] text-ink outline-none focus:border-accent"
       aria-label="Filter by client"

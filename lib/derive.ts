@@ -12,6 +12,38 @@ export function isToday(iso: string, today = todayISO()): boolean {
   return iso.slice(0, 10) === today;
 }
 
+// Local calendar date (YYYY-MM-DD) of an absolute timestamp.
+export function localDate(iso: string): string {
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// Shift a YYYY-MM-DD date by n days, returned as YYYY-MM-DD.
+export function addDays(iso: string, n: number): string {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// Monday of the week containing the given YYYY-MM-DD date.
+export function startOfWeek(iso: string): string {
+  const d = new Date(iso + "T00:00:00");
+  const dow = (d.getDay() + 6) % 7; // 0 = Monday
+  return addDays(iso, -dow);
+}
+
+// The 7 YYYY-MM-DD dates (Mon..Sun) for the week containing `iso`.
+export function weekDays(iso: string): string[] {
+  const mon = startOfWeek(iso);
+  return Array.from({ length: 7 }, (_, i) => addDays(mon, i));
+}
+
 export function isOverdue(item: Item, today = todayISO()): boolean {
   return !!item.due_date && item.due_date < today && item.status !== "done";
 }
