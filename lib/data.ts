@@ -1,6 +1,14 @@
 // Server-side data access. RLS scopes every query to the signed-in user.
 import { createClient } from "@/lib/supabase/server";
-import type { Client, Item, Meeting, ItemEvent } from "./types";
+import type { Client, Item, Meeting, ItemEvent, AppSettings } from "./types";
+
+export async function getSettings(): Promise<AppSettings | null> {
+  const supabase = createClient();
+  // app_settings may not be migrated yet — degrade gracefully.
+  const { data, error } = await supabase.from("app_settings").select("*").maybeSingle();
+  if (error) return null;
+  return (data as AppSettings) ?? null;
+}
 
 export async function getItems(): Promise<Item[]> {
   const supabase = createClient();

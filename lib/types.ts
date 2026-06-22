@@ -66,6 +66,13 @@ export interface Meeting {
   attendees: string | null;
   raw_notes: string | null;
   created_at: string;
+  ics_uid: string | null; // calendar-sourced meetings; null if created manually
+}
+
+export interface AppSettings {
+  user_id: string;
+  ics_url: string | null;
+  calendar_last_synced_at: string | null;
 }
 
 export type ItemEventKind =
