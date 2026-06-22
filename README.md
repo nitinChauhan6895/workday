@@ -4,6 +4,15 @@ Personal productivity PWA for client-facing ASR / TTS / STT deployment work —
 deployments, bugs, action items, support threads, QA, meetings and dev standups.
 Single user, desktop-first, installable.
 
+**Live:** https://workday-six.vercel.app · **Dev:** `npm run dev` → http://localhost:3100
+
+## Deploy
+
+Hosted on Vercel (project `workday`, scope `vesmoenterprise-3198`), auto-deploys on
+push to `main`. Env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+are set in Vercel for Production/Preview/Development. After a domain change, update
+Supabase → Auth → URL Configuration (Site URL + `/auth/confirm` redirect).
+
 Sibling of TrackItALl / SplitnPay / Kiraidari and shares their stack:
 **Next.js 14 (App Router) · React 18 · TypeScript · Tailwind 3 · Supabase.**
 
