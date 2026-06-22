@@ -1,34 +1,69 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+type Mode = "signin" | "signup";
+
+const inputCls =
+  "w-full rounded-lg border border-line bg-card px-3 py-2.5 text-[13px] text-ink outline-none placeholder:text-muted focus:border-accent";
+
 export default function LoginPage() {
+  const router = useRouter();
+  const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
-  const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    setPending(true);
+    setNotice("");
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/confirm`,
-        shouldCreateUser: true,
-      },
-    });
-
-    setPending(false);
-    if (error) {
-      setError(error.message);
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
       return;
     }
-    setSent(true);
+
+    setPending(true);
+    const supabase = createClient();
+
+    if (mode === "signup") {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+      });
+      if (error) {
+        setPending(false);
+        setError(friendly(error.message));
+        return;
+      }
+      if (!data.session) {
+        setPending(false);
+        setNotice("Account created. Check your email to confirm, then sign in.");
+        setMode("signin");
+        return;
+      }
+      router.replace("/");
+      router.refresh();
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    if (error) {
+      setPending(false);
+      setError(friendly(error.message));
+      return;
+    }
+    router.replace("/");
+    router.refresh();
   }
 
   return (
@@ -40,52 +75,73 @@ export default function LoginPage() {
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-ink">WorkDay</h1>
           <p className="mt-1 text-[13px] text-subtle">
-            Sign in with a magic link to your email.
+            {mode === "signin" ? "Sign in to your workspace." : "Create your account."}
           </p>
         </div>
 
-        {sent ? (
-          <div className="card p-6 text-center">
-            <p className="text-[14px] font-medium text-ink">Check your inbox</p>
-            <p className="mt-1.5 text-[13px] text-subtle">
-              We sent a sign-in link to <span className="text-ink">{email}</span>.
-              Open it on this device to continue.
-            </p>
-            <button
-              onClick={() => {
-                setSent(false);
-                setError("");
-              }}
-              className="mt-4 text-[13px] font-medium text-accent hover:underline"
-            >
-              Use a different email
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="card space-y-3 p-6">
-            <input
-              type="email"
-              required
-              autoFocus
-              autoCapitalize="none"
-              autoCorrect="off"
-              autoComplete="email"
-              placeholder="you@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-line bg-card px-3 py-2.5 text-[13px] text-ink outline-none placeholder:text-muted focus:border-accent"
-            />
-            <button
-              type="submit"
-              disabled={pending}
-              className="w-full rounded-lg bg-accent px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-accent-dark disabled:opacity-60"
-            >
-              {pending ? "Sending…" : "Send magic link"}
-            </button>
-            {error && <p className="text-center text-[12px] text-[#C81E1E]">{error}</p>}
-          </form>
-        )}
+        <form onSubmit={handleSubmit} className="card space-y-3 p-6">
+          <input
+            type="email"
+            required
+            autoFocus
+            autoCapitalize="none"
+            autoCorrect="off"
+            autoComplete="email"
+            placeholder="you@company.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={inputCls}
+          />
+          <input
+            type="password"
+            required
+            autoComplete={mode === "signin" ? "current-password" : "new-password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={inputCls}
+          />
+          <button
+            type="submit"
+            disabled={pending}
+            className="w-full rounded-lg bg-accent px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-accent-dark disabled:opacity-60"
+          >
+            {pending ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+          </button>
+
+          {error && <p className="text-center text-[12px] text-[#C81E1E]">{error}</p>}
+          {notice && <p className="text-center text-[12px] text-[#1A7F37]">{notice}</p>}
+        </form>
+
+        <div className="mt-4 flex items-center justify-between px-1 text-[12px]">
+          <button
+            type="button"
+            onClick={() => {
+              setMode(mode === "signin" ? "signup" : "signin");
+              setError("");
+              setNotice("");
+            }}
+            className="font-medium text-accent hover:underline"
+          >
+            {mode === "signin" ? "Create an account" : "Have an account? Sign in"}
+          </button>
+          {mode === "signin" && (
+            <Link href="/forgot" className="text-subtle hover:text-ink">
+              Forgot password?
+            </Link>
+          )}
+        </div>
       </div>
     </main>
   );
+}
+
+function friendly(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login credentials")) return "Wrong email or password.";
+  if (m.includes("already registered") || m.includes("already been registered"))
+    return "That email already has an account. Sign in, or use “Forgot password”.";
+  if (m.includes("email not confirmed"))
+    return "Email not confirmed yet — check your inbox.";
+  return message;
 }
