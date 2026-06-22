@@ -32,9 +32,17 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             <h1 className="text-xl font-semibold tracking-tight text-ink">{client.name}</h1>
             <p className="mt-0.5 text-[12px] text-muted">{client.products.join(" · ") || "—"}</p>
           </div>
-          <span className="rounded-full bg-canvas px-2.5 py-1 text-[12px] font-medium text-subtle hairline">
-            {STAGE_META[client.stage].label}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-canvas px-2.5 py-1 text-[12px] font-medium text-subtle hairline">
+              {STAGE_META[client.stage].label}
+            </span>
+            <Link
+              href={`/clients/${client.id}/edit`}
+              className="rounded-lg border border-line bg-card px-3 py-1.5 text-[12px] font-medium text-ink transition hover:bg-canvas"
+            >
+              Edit
+            </Link>
+          </div>
         </div>
 
         <div className="mt-4 flex items-center gap-3">

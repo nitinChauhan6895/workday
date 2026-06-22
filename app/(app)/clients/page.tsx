@@ -13,12 +13,26 @@ export default async function ClientsPage() {
   return (
     <div>
       <RealtimeRefresh />
-      <PageHeader title="Clients" subtitle={`${clients.length} active`} />
+      <PageHeader
+        title="Clients"
+        subtitle={`${clients.length} active`}
+        action={
+          <Link
+            href="/clients/new"
+            className="rounded-lg bg-accent px-3 py-2 text-[13px] font-medium text-white transition hover:bg-accent-dark"
+          >
+            New client
+          </Link>
+        }
+      />
 
       {clients.length === 0 ? (
-        <div className="card px-4 py-10 text-center text-[13px] text-muted">
-          No clients yet.
-        </div>
+        <Link
+          href="/clients/new"
+          className="card block px-4 py-10 text-center text-[13px] text-muted transition hover:bg-canvas"
+        >
+          No clients yet — add your first one.
+        </Link>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {clients.map((c) => {
