@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getMeetings, getClients, clientsById } from "@/lib/data";
-import { todayISO, localDate, weekDays, addDays } from "@/lib/derive";
+import { todayISO, localDate, weekDays, addDays, formatTime, formatDateTime, formatDateOnly } from "@/lib/derive";
 import type { Meeting, Client } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
 import MeetingsClientFilter from "@/components/MeetingsClientFilter";
@@ -138,10 +138,10 @@ function WeekView({
               }`}
             >
               <span className={`text-[12px] font-semibold ${isToday ? "text-accent" : "text-ink"}`}>
-                {new Date(d + "T00:00:00").toLocaleDateString("en-US", { weekday: "short" })}
+                {formatDateOnly(d, { weekday: "short" })}
               </span>
               <span className="text-[11px] tabular-nums text-muted">
-                {new Date(d + "T00:00:00").toLocaleDateString("en-US", { day: "numeric" })}
+                {formatDateOnly(d, { day: "numeric" })}
               </span>
             </div>
             <div className="divide-y divide-line/60">
@@ -157,7 +157,7 @@ function WeekView({
                       className="block px-3 py-2 transition hover:bg-canvas"
                     >
                       <div className="flex items-center gap-1 text-[11px] tabular-nums text-accent">
-                        {fmtTime(m.datetime)}
+                        {formatTime(m.datetime)}
                         {m.join_url && (
                           <span
                             className="inline-block h-1.5 w-1.5 rounded-full bg-[#5059C9]"
@@ -245,18 +245,17 @@ function TimeRow({
   highlight?: boolean;
 }) {
   const client = meeting.client_id ? clientMap.get(meeting.client_id) : null;
-  const d = new Date(meeting.datetime);
   return (
     <div className="flex items-center gap-3 px-4 py-3 transition hover:bg-canvas">
       <div className="w-16 shrink-0 text-[12px] tabular-nums text-accent">
-        {fmtTime(meeting.datetime)}
+        {formatTime(meeting.datetime)}
       </div>
       <Link href={`/meetings/${meeting.id}`} className="min-w-0 flex-1">
         <div className="truncate text-[13px] font-medium text-ink">{meeting.title}</div>
         <div className="mt-0.5 text-[11px] text-muted">
           {client ? client.name : "Internal"}
           {showDate
-            ? ` · ${d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}`
+            ? ` · ${formatDateTime(meeting.datetime, { weekday: "short", month: "short", day: "numeric" })}`
             : meeting.attendees
               ? ` · ${meeting.attendees}`
               : ""}
@@ -281,23 +280,16 @@ function Empty({ children }: { children: React.ReactNode }) {
 }
 
 // ---------- formatting ----------
-function fmtTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-}
 function fmtDay(iso: string): string {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
+  return formatDateOnly(iso, { weekday: "short", month: "short", day: "numeric" });
 }
 function fmtWeekRange(iso: string): string {
   const days = weekDays(iso);
-  const start = new Date(days[0] + "T00:00:00");
-  const end = new Date(addDays(days[0], 6) + "T00:00:00");
-  const sameMonth = start.getMonth() === end.getMonth();
-  const s = start.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  const e = end.toLocaleDateString("en-US", {
+  const startYmd = days[0];
+  const endYmd = addDays(days[0], 6);
+  const sameMonth = startYmd.slice(5, 7) === endYmd.slice(5, 7);
+  const s = formatDateOnly(startYmd, { month: "short", day: "numeric" });
+  const e = formatDateOnly(endYmd, {
     month: sameMonth ? undefined : "short",
     day: "numeric",
   });

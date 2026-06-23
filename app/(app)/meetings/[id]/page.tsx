@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMeeting, getClient, getItems, getClients, clientsById } from "@/lib/data";
+import { formatDateTime } from "@/lib/derive";
 import ItemRow from "@/components/ItemRow";
 import MeetingNotes from "@/components/MeetingNotes";
 import QuickAddActionItem from "@/components/QuickAddActionItem";
@@ -28,7 +29,6 @@ export default async function MeetingCapturePage({ params }: { params: { id: str
   ]);
   const clientMap = clientsById(clients);
   const actionItems = allItems.filter((i) => i.meeting_id === meeting.id);
-  const d = new Date(meeting.datetime);
 
   return (
     <div>
@@ -42,7 +42,7 @@ export default async function MeetingCapturePage({ params }: { params: { id: str
           <h1 className="text-xl font-semibold tracking-tight text-ink">{meeting.title}</h1>
           <p className="mt-0.5 text-[12px] text-muted">
             {client ? client.name : "Internal"} ·{" "}
-            {d.toLocaleString("en-US", {
+            {formatDateTime(meeting.datetime, {
               weekday: "long",
               month: "long",
               day: "numeric",

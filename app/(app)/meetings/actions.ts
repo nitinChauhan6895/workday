@@ -9,11 +9,19 @@ function str(form: FormData, key: string): string | null {
   return v === "" ? null : v;
 }
 
+// A datetime-local field ("YYYY-MM-DDTHH:MM") carries no timezone; treat it as
+// IST (+05:30, our APP_TZ) so it's stored as the correct instant.
+function toInstant(local: string | null): string {
+  if (!local) return new Date().toISOString();
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(local)) return `${local}:00+05:30`;
+  return local;
+}
+
 function buildPayload(form: FormData) {
   return {
     title: str(form, "title") ?? "Untitled meeting",
     client_id: str(form, "client_id"),
-    datetime: str(form, "datetime") ?? new Date().toISOString(),
+    datetime: toInstant(str(form, "datetime")),
     attendees: str(form, "attendees"),
     raw_notes: str(form, "raw_notes"),
   };

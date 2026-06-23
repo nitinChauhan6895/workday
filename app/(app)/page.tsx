@@ -8,6 +8,9 @@ import {
   isOpen,
   todayISO,
   addBusinessDays,
+  formatTime,
+  hourInAppTz,
+  APP_TZ,
 } from "@/lib/derive";
 import DashboardItems from "@/components/DashboardItems";
 import RealtimeRefresh from "@/components/RealtimeRefresh";
@@ -25,7 +28,7 @@ export default async function DashboardPage() {
   const clientMap = clientsById(clients);
   const today = todayISO();
   const now = new Date();
-  const greeting = greetingFor(now);
+  const greeting = greetingFor(hourInAppTz(now));
   const meta = (user?.user_metadata ?? {}) as Record<string, string>;
   const fullName = [meta.first_name, meta.last_name].filter(Boolean).join(" ");
 
@@ -56,6 +59,7 @@ export default async function DashboardPage() {
           </h1>
           <p className="mt-0.5 text-[13px] text-subtle">
             {now.toLocaleDateString("en-US", {
+              timeZone: APP_TZ,
               weekday: "long",
               month: "long",
               day: "numeric",
@@ -164,7 +168,7 @@ export default async function DashboardPage() {
             todaysMeetings.map((m) => (
               <div key={m.id} className="flex items-center gap-3 px-4 py-3 transition hover:bg-canvas">
                 <div className="w-16 shrink-0 text-[12px] tabular-nums text-accent">
-                  {new Date(m.datetime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                  {formatTime(m.datetime)}
                 </div>
                 <Link href={`/meetings/${m.id}`} className="min-w-0 flex-1">
                   <div className="truncate text-[13px] font-medium text-ink">{m.title}</div>
@@ -192,8 +196,7 @@ export default async function DashboardPage() {
   );
 }
 
-function greetingFor(d: Date): string {
-  const h = d.getHours();
+function greetingFor(h: number): string {
   if (h < 12) return "Good morning";
   if (h < 18) return "Good afternoon";
   return "Good evening";
