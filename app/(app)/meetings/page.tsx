@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getMeetings, getClients, clientsById } from "@/lib/data";
+import { getMeetingsRange, getClients, clientsById } from "@/lib/data";
 import { todayISO, localDate, weekDays, addDays, formatTime, formatDateTime, formatDateOnly } from "@/lib/derive";
 import type { Meeting, Client } from "@/lib/types";
 import PageHeader from "@/components/PageHeader";
@@ -16,15 +16,33 @@ export default async function MeetingsPage({
 }: {
   searchParams: { client?: string; view?: string; date?: string };
 }) {
-  const [allMeetings, clients] = await Promise.all([getMeetings(), getClients()]);
-  const clientMap = clientsById(clients);
   const today = todayISO();
-
   const view: View =
     searchParams.view === "day" || searchParams.view === "list"
       ? searchParams.view
       : "week";
   const anchor = searchParams.date ?? today;
+
+  // Fetch only the meetings the active view needs (not all 273+).
+  const ist = (ymd: string) => `${ymd}T00:00:00+05:30`;
+  let startIso: string, endIso: string;
+  if (view === "day") {
+    startIso = ist(anchor);
+    endIso = ist(addDays(anchor, 1));
+  } else if (view === "week") {
+    const wd = weekDays(anchor);
+    startIso = ist(wd[0]);
+    endIso = ist(addDays(wd[6], 1));
+  } else {
+    startIso = ist(addDays(today, -60));
+    endIso = ist(addDays(today, 180));
+  }
+
+  const [allMeetings, clients] = await Promise.all([
+    getMeetingsRange(startIso, endIso),
+    getClients(),
+  ]);
+  const clientMap = clientsById(clients);
 
   const clientFilter = searchParams.client;
   const meetings = allMeetings.filter((m) => {
@@ -45,7 +63,7 @@ export default async function MeetingsPage({
       <RealtimeRefresh />
       <PageHeader
         title="Meetings"
-        subtitle={`${allMeetings.length} total`}
+        subtitle={view === "list" ? "Recent & upcoming" : label}
         action={
           <Link
             href="/meetings/new"

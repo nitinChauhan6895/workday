@@ -1,6 +1,12 @@
 // Server-side data access. RLS scopes every query to the signed-in user.
+// Fetchers are wrapped in React cache() so repeated calls within one request
+// hit the DB only once. Prefer the *scoped* fetchers over the "all rows" ones.
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Client, Item, Meeting, ItemEvent, AppSettings } from "./types";
+
+// Columns needed to render a meeting list/grid (skips raw_notes/created_at).
+const MEETING_LIST_COLS = "id,title,client_id,datetime,attendees,ics_uid,join_url";
 
 // Coerce array-ish columns so the UI never sees null/undefined (e.g. pre-migration).
 function arr<T>(v: any): T[] {
@@ -18,16 +24,28 @@ function normClient(r: any): Client {
     checklist: arr(r.checklist),
   } as Client;
 }
+function normMeeting(r: any): Meeting {
+  return { raw_notes: null, created_at: "", ...r } as Meeting;
+}
 
-export async function getSettings(): Promise<AppSettings | null> {
+// Display-only current user — reads the cookie session (no network round-trip).
+// Middleware already validated the session on this request.
+export const getSessionUser = cache(async () => {
   const supabase = createClient();
-  // app_settings may not be migrated yet — degrade gracefully.
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session?.user ?? null;
+});
+
+export const getSettings = cache(async (): Promise<AppSettings | null> => {
+  const supabase = createClient();
   const { data, error } = await supabase.from("app_settings").select("*").maybeSingle();
   if (error) return null;
   return (data as AppSettings) ?? null;
-}
+});
 
-export async function getItems(): Promise<Item[]> {
+export const getItems = cache(async (): Promise<Item[]> => {
   const supabase = createClient();
   const { data } = await supabase
     .from("items")
@@ -35,47 +53,91 @@ export async function getItems(): Promise<Item[]> {
     .order("position", { ascending: true })
     .order("created_at", { ascending: true });
   return (data ?? []).map(normItem);
-}
+});
 
-export async function getItem(id: string): Promise<Item | null> {
+export const getItemsForClient = cache(async (clientId: string): Promise<Item[]> => {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("items")
+    .select("*")
+    .eq("client_id", clientId)
+    .order("position", { ascending: true });
+  return (data ?? []).map(normItem);
+});
+
+export const getItemsForMeeting = cache(async (meetingId: string): Promise<Item[]> => {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("items")
+    .select("*")
+    .eq("meeting_id", meetingId)
+    .order("position", { ascending: true });
+  return (data ?? []).map(normItem);
+});
+
+export const getItem = cache(async (id: string): Promise<Item | null> => {
   const supabase = createClient();
   const { data } = await supabase.from("items").select("*").eq("id", id).maybeSingle();
   return data ? normItem(data) : null;
-}
+});
 
-export async function getClients(): Promise<Client[]> {
+export const getClients = cache(async (): Promise<Client[]> => {
   const supabase = createClient();
   const { data } = await supabase
     .from("clients")
     .select("*")
     .order("name", { ascending: true });
   return (data ?? []).map(normClient);
-}
+});
 
-export async function getClient(id: string): Promise<Client | null> {
+export const getClient = cache(async (id: string): Promise<Client | null> => {
   const supabase = createClient();
   const { data } = await supabase.from("clients").select("*").eq("id", id).maybeSingle();
   return data ? normClient(data) : null;
-}
+});
 
-export async function getMeetings(): Promise<Meeting[]> {
+// All meetings (full rows) — avoid on hot paths; prefer the scoped fetchers below.
+export const getMeetings = cache(async (): Promise<Meeting[]> => {
   const supabase = createClient();
   const { data } = await supabase
     .from("meetings")
     .select("*")
     .order("datetime", { ascending: false });
   return (data ?? []) as Meeting[];
-}
+});
 
-export async function getMeeting(id: string): Promise<Meeting | null> {
+// Meetings whose datetime falls within [startIso, endIso). Light columns.
+export const getMeetingsRange = cache(
+  async (startIso: string, endIso: string): Promise<Meeting[]> => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("meetings")
+      .select(MEETING_LIST_COLS)
+      .gte("datetime", startIso)
+      .lt("datetime", endIso)
+      .order("datetime", { ascending: true });
+    return (data ?? []).map(normMeeting);
+  },
+);
+
+export const getMeetingsForClient = cache(async (clientId: string): Promise<Meeting[]> => {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("meetings")
+    .select(MEETING_LIST_COLS)
+    .eq("client_id", clientId)
+    .order("datetime", { ascending: false });
+  return (data ?? []).map(normMeeting);
+});
+
+export const getMeeting = cache(async (id: string): Promise<Meeting | null> => {
   const supabase = createClient();
   const { data } = await supabase.from("meetings").select("*").eq("id", id).maybeSingle();
   return (data as Meeting) ?? null;
-}
+});
 
-export async function getItemEvents(itemId: string): Promise<ItemEvent[]> {
+export const getItemEvents = cache(async (itemId: string): Promise<ItemEvent[]> => {
   const supabase = createClient();
-  // Best-effort: if the item_events table hasn't been migrated yet, return [].
   const { data, error } = await supabase
     .from("item_events")
     .select("*")
@@ -83,7 +145,7 @@ export async function getItemEvents(itemId: string): Promise<ItemEvent[]> {
     .order("created_at", { ascending: false });
   if (error) return [];
   return (data ?? []) as ItemEvent[];
-}
+});
 
 // Convenience: a Map for O(1) client lookups when rendering item lists.
 export function clientsById(clients: Client[]): Map<string, Client> {

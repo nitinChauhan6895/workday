@@ -1,5 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
-import { getSettings } from "@/lib/data";
+import { getSettings, getSessionUser } from "@/lib/data";
 import { APP_VERSION } from "@/lib/version";
 import PageHeader from "@/components/PageHeader";
 import SignOutButton from "@/components/SignOutButton";
@@ -10,10 +9,7 @@ import ChangePasswordForm from "@/components/ChangePasswordForm";
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const [{ data: { user } }, settings] = await Promise.all([
-    createClient().auth.getUser(),
-    getSettings(),
-  ]);
+  const [user, settings] = await Promise.all([getSessionUser(), getSettings()]);
 
   const meta = (user?.user_metadata ?? {}) as Record<string, string>;
   const profile = {

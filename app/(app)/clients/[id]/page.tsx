@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getClient, getItems, getMeetings } from "@/lib/data";
+import { getClient, getItemsForClient, getMeetingsForClient } from "@/lib/data";
 import { clientProgress } from "@/lib/derive";
 import { STAGE_META } from "@/lib/types";
 import ItemRow from "@/components/ItemRow";
@@ -12,14 +12,13 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
   const client = await getClient(params.id);
   if (!client) notFound();
 
-  const [allItems, allMeetings] = await Promise.all([getItems(), getMeetings()]);
-  const own = allItems.filter((i) => i.client_id === client.id);
-  const pct = clientProgress(client, allItems);
+  const [own, clientMeetings] = await Promise.all([
+    getItemsForClient(client.id),
+    getMeetingsForClient(client.id),
+  ]);
+  const pct = clientProgress(client, own);
   const open = own.filter((i) => i.status !== "done");
   const done = own.filter((i) => i.status === "done");
-  const clientMeetings = allMeetings
-    .filter((m) => m.client_id === client.id)
-    .sort((a, b) => b.datetime.localeCompare(a.datetime));
 
   return (
     <div className="mx-auto max-w-3xl">

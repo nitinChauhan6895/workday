@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { getItems, getClients, getMeetings, clientsById } from "@/lib/data";
-import { createClient } from "@/lib/supabase/server";
+import { getItems, getClients, getMeetingsRange, getSessionUser } from "@/lib/data";
 import {
   dashboardStats,
   clientProgress,
-  isToday,
   isOpen,
   todayISO,
+  addDays,
   addBusinessDays,
   formatTime,
   hourInAppTz,
@@ -19,14 +18,16 @@ import { STAGE_META } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [items, clients, meetings, { data: { user } }] = await Promise.all([
+  const today = todayISO();
+  const dayStart = `${today}T00:00:00+05:30`;
+  const dayEnd = `${addDays(today, 1)}T00:00:00+05:30`;
+
+  const [items, clients, todaysMeetings, user] = await Promise.all([
     getItems(),
     getClients(),
-    getMeetings(),
-    createClient().auth.getUser(),
+    getMeetingsRange(dayStart, dayEnd),
+    getSessionUser(),
   ]);
-  const clientMap = clientsById(clients);
-  const today = todayISO();
   const now = new Date();
   const greeting = greetingFor(hourInAppTz(now));
   const meta = (user?.user_metadata ?? {}) as Record<string, string>;
@@ -40,14 +41,11 @@ export default async function DashboardPage() {
     .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
 
   const topClients = clients.slice(0, 5);
+  const clientMap = new Map(clients.map((c) => [c.id, c]));
 
-  const todaysMeetings = meetings
-    .filter((m) => isToday(m.datetime, today))
-    .sort((a, b) => a.datetime.localeCompare(b.datetime));
-
-  const stats = dashboardStats(items, meetings, today);
+  const stats = dashboardStats(items, todaysMeetings, today);
   const firstRun =
-    items.length === 0 && clients.length === 0 && meetings.length === 0;
+    items.length === 0 && clients.length === 0 && todaysMeetings.length === 0;
 
   return (
     <div>

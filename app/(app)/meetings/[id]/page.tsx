@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getMeeting, getClient, getItems, getClients, clientsById } from "@/lib/data";
+import { getMeeting, getClient, getItemsForMeeting, getClients, clientsById } from "@/lib/data";
 import { formatDateTime } from "@/lib/derive";
 import ItemRow from "@/components/ItemRow";
 import MeetingNotes from "@/components/MeetingNotes";
@@ -22,13 +22,12 @@ export default async function MeetingCapturePage({ params }: { params: { id: str
   const meeting = await getMeeting(params.id);
   if (!meeting) notFound();
 
-  const [client, allItems, clients] = await Promise.all([
+  const [client, actionItems, clients] = await Promise.all([
     meeting.client_id ? getClient(meeting.client_id) : Promise.resolve(null),
-    getItems(),
+    getItemsForMeeting(meeting.id),
     getClients(),
   ]);
   const clientMap = clientsById(clients);
-  const actionItems = allItems.filter((i) => i.meeting_id === meeting.id);
 
   return (
     <div>
