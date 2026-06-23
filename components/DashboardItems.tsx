@@ -16,11 +16,13 @@ export default function DashboardItems({
   const [clientId, setClientId] = useState("");
   const clientMap = new Map(clients.map((c) => [c.id, c]));
 
-  const shown = items.filter((i) => {
-    if (clientId === "internal") return i.client_id === null;
-    if (clientId) return i.client_id === clientId;
-    return true;
-  });
+  const shown = items
+    .filter((i) => {
+      if (clientId === "internal") return i.client_id === null;
+      if (clientId) return i.client_id === clientId;
+      return true;
+    })
+    .slice(0, 5);
 
   return (
     <section>

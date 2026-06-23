@@ -36,7 +36,7 @@ export default async function DashboardPage() {
     .filter((i) => isOpen(i) && !!i.due_date && i.due_date <= windowEnd)
     .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
 
-  const topClients = clients.slice(0, 3);
+  const topClients = clients.slice(0, 5);
 
   const todaysMeetings = meetings
     .filter((m) => isToday(m.datetime, today))

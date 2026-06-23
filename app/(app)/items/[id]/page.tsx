@@ -4,6 +4,7 @@ import { getItem, getClients, getMeeting, getItemEvents } from "@/lib/data";
 import { updateItem } from "../actions";
 import ItemForm from "@/components/ItemForm";
 import DeleteItemButton from "@/components/DeleteItemButton";
+import CloneItemButton from "@/components/CloneItemButton";
 import { TypeBadge, StatusBadge } from "@/components/Badge";
 import type { ItemEvent } from "@/lib/types";
 
@@ -37,7 +38,10 @@ export default async function ItemDetailPage({ params }: { params: { id: string 
             <StatusBadge status={item.status} />
           </div>
         </div>
-        <DeleteItemButton id={item.id} />
+        <div className="flex shrink-0 items-center gap-2">
+          <CloneItemButton id={item.id} variant="outline" />
+          <DeleteItemButton id={item.id} />
+        </div>
       </div>
 
       {sourceMeeting && (

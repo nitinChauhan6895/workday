@@ -101,6 +101,41 @@ export async function updateItem(id: string, form: FormData) {
   redirect(`/items/${id}`);
 }
 
+export async function cloneItem(id: string) {
+  const supabase = createClient();
+  const { data: src, error: e1 } = await supabase
+    .from("items")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (e1 || !src) throw new Error(e1?.message ?? "Item not found.");
+
+  const { data: copy, error } = await supabase
+    .from("items")
+    .insert({
+      title: `${src.title} (copy)`,
+      description: src.description,
+      type: src.type,
+      client_id: src.client_id,
+      status: "backlog",
+      priority: src.priority,
+      owner: src.owner,
+      assigned_dev: src.assigned_dev,
+      due_date: src.due_date,
+      language: src.language,
+      links: src.links ?? [],
+      checklist: src.checklist ?? [],
+      flag_for_standup: src.flag_for_standup,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+
+  await logEvent(supabase, copy.id, "created");
+  revalidatePath("/", "layout");
+  redirect(`/items/${copy.id}`);
+}
+
 export async function deleteItem(id: string) {
   const supabase = createClient();
   const { error } = await supabase.from("items").delete().eq("id", id);
