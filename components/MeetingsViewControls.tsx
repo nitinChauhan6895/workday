@@ -23,17 +23,23 @@ export default function MeetingsViewControls({
     router.push(`/meetings?${p.toString()}`);
   }
 
+  // Format from local components — NOT toISOString(), which would shift the
+  // date across the UTC boundary (e.g. IST midnight → previous day in UTC).
+  function fmt(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
   function shift(dir: number) {
     const d = new Date(date + "T00:00:00");
     d.setDate(d.getDate() + dir * (view === "week" ? 7 : 1));
-    const iso = d.toISOString().slice(0, 10);
-    push({ date: iso });
+    push({ date: fmt(d) });
   }
 
   function today() {
-    const now = new Date();
-    const tz = now.getTimezoneOffset() * 60000;
-    push({ date: new Date(now.getTime() - tz).toISOString().slice(0, 10) });
+    push({ date: fmt(new Date()) });
   }
 
   return (
